@@ -6,6 +6,7 @@ from itertools import cycle
 from sys import exit
 from distutils.version import StrictVersion
 
+from aiohttp import ClientSession
 from aiopogo import PGoApi, HashServer, json_loads, exceptions as ex
 from aiopogo.auth_ptc import AuthPtc
 from cyrandom import choice, randint, uniform
@@ -790,7 +791,9 @@ class Worker:
                             or (encounter_conf == 'some'
                             and normalized['pokemon_id'] in conf.ENCOUNTER_IDS)):
                         try:
-                            await self.encounter(normalized, pokemon.spawn_point_id)
+                            async with ClientSession(loop=LOOP) as session: #ADAM
+                                 await self.pgscout(session, normalized, pokemon.spawn_point_id) #ADAM
+#                            await self.encounter(normalized, pokemon.spawn_point_id)
                         except CancelledError:
                             db_proc.add(normalized)
                             raise
@@ -884,6 +887,33 @@ class Worker:
         self.update_accounts_dict()
         self.handle = LOOP.call_later(60, self.unset_code)
         return pokemon_seen + forts_seen + points_seen
+
+    async def pgscout(self, session, pokemon, spawn_id):
+        try:
+            async with session.get(
+                    'http://127.0.0.1:' + conf.PGSCOUT_PORT + '/iv',
+                    params={'pokemon_id': pokemon['pokemon_id'],
+                            'encounter_id': pokemon['encounter_id'],
+                            'spawn_point_id': spawn_id,
+                            'latitude': str(pokemon['lat']),
+                            'longitude': str(pokemon['lon'])},
+                    timeout=34) as resp:
+                response = await resp.json(loads=json_loads)
+            try:
+                pokemon['move_1'] = response['move_1']
+                pokemon['move_2'] = response['move_2']
+                pokemon['individual_attack'] = response.get('iv_attack',0)
+                pokemon['individual_defense'] = response.get('iv_defense',0)
+                pokemon['individual_stamina'] = response.get('iv_stamina',0)
+                pokemon['height'] = response['height']
+                pokemon['weight'] = response['weight']
+                pokemon['gender'] = response['gender']
+                pokemon['form'] = response.get('form')
+                pokemon['cp'] = response.get('cp')
+            except KeyError:
+                self.log.error('Missing Pokemon data in PGScout response.')
+        except Exception:
+            self.log.exception('PGScout Request Error.')
 
     def smart_throttle(self, requests=1):
         try:
@@ -983,11 +1013,11 @@ class Worker:
 
         try:
             pdata = responses['ENCOUNTER'].wild_pokemon.pokemon_data
-            pokemon['move_1'] = pdata.move_1
-            pokemon['move_2'] = pdata.move_2
-            pokemon['individual_attack'] = pdata.individual_attack
-            pokemon['individual_defense'] = pdata.individual_defense
-            pokemon['individual_stamina'] = pdata.individual_stamina
+#            pokemon['move_1'] = pdata.move_1
+#            pokemon['move_2'] = pdata.move_2
+#            pokemon['individual_attack'] = pdata.individual_attack
+#            pokemon['individual_defense'] = pdata.individual_defense
+#            pokemon['individual_stamina'] = pdata.individual_stamina
             pokemon['height'] = pdata.height_m
             pokemon['weight'] = pdata.weight_kg
             pokemon['gender'] = pdata.pokemon_display.gender
