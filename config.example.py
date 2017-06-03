@@ -101,6 +101,8 @@ INCUBATE_EGGS = True      # incubate eggs if available
 ENCOUNTER = None
 #ENCOUNTER_IDS = (3, 6, 9, 45, 62, 71, 80, 85, 87, 89, 91, 94, 114, 130, 131, 134)
 
+PGSCOUT_PORT ='1234' #MUST MATCH YOUR PGSCOUT CONFIG.JSON
+
 # PokéStops
 SPIN_POKESTOPS = True  # spin all PokéStops that are within range
 SPIN_COOLDOWN = 300    # spin only one PokéStop every n seconds (default 300)
