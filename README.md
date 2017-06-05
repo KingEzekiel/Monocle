@@ -1,3 +1,23 @@
+THIS CHANGE REQUIRES YOU TO UPDATE YOUR DB TO ALLOW FOR LEVEL AND CP.  
+YOU CAN USE PGADMIN/SQLWORKBENCH/OTHER TOOL OF CHOICE TO ADD THE FOLLOWING COLUMNS TO BOTH SIGHTINGS AND MYSTERY SIGHTINGS:
+
+-cp (SmallInt for POSTGRES.  MYSQL users, SMALLINT)
+-cp_multiplier (Double Precision for POSTGRES. MYSQL users, DOUBLE)
+
+IF YOU PREFER CLI, THIS SHOULD DO THE TRICK (MAKE SURE YOU ARE IN YOUR DB VIA PSQL):
+
+POSTGRES: ALTER TABLE public.sightings ADD cp SmallInt;
+          ALTER TABLE public.sightings ADD cp_multiplier Double Precision;
+          ALTER TABLE public.mystery_sightings ADD cp SmallInt;          
+          ALTER TABLE public.mystery_sightings ADD cp_multiplier Double Precision;
+          
+MYSQL:  ALTER TABLE public.sightings ADD cp SMALLINT;
+        ALTER TABLE public.sightings ADD cp_multiplier DOUBLE;
+        ALTER TABLE public.mystery_sightings ADD cp SMALLINT;
+        ALTER TABLE public.mystery_sightings ADD cp_multiplier DOUBLE;
+
+MILEAGE MAY VARY.  NOT TESTED ON MYSQL.  IF ANY ISSUES, PLEASE LET ME KNOW.  
+
 # Monocle
 
 [![Build Status](https://travis-ci.org/Noctem/Monocle.svg?branch=develop)](https://travis-ci.org/Noctem/Monocle)
