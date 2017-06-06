@@ -9,7 +9,7 @@ from asyncio import gather, CancelledError, TimeoutError
 from aiohttp import ClientError, ClientResponseError, ServerTimeoutError
 from aiopogo import json_dumps, json_loads
 
-from .utils import load_pickle, dump_pickle
+from .utils import load_pickle, dump_pickle, calc_pokemon_level
 from .db import session_scope, get_pokemon_ranking, estimate_remaining_time
 from .names import MOVES, POKEMON
 from .shared import get_logger, SessionManager, LOOP, run_threaded
@@ -788,6 +788,7 @@ class Notifier:
             data['message']['gender'] = pokemon['gender']
             data['message']['form'] = pokemon['form']
             data['message']['cp'] = pokemon['cp']
+            data['message']['level'] = calc_pokemon_level(pokemon['cp_multiplier'])
         except KeyError:
             pass
 
