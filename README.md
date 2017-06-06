@@ -18,6 +18,12 @@ MYSQL:  ALTER TABLE public.sightings ADD cp SMALLINT;
 
 MILEAGE MAY VARY.  NOT TESTED ON MYSQL.  IF ANY ISSUES, PLEASE LET ME KNOW.  
 
+Requires PGScout be installed to return Level30 data.  
+https://github.com/sLoPPydrive/PGScout/
+
+*DISCLAIMER*
+This is a branch.  I may or may not update it based on my convenience.  Please use this at your own risk.  99% of any support you require should be conducted by you and your own.  If you have a PR, I will gladly review it.  
+
 # Monocle
 
 [![Build Status](https://travis-ci.org/Noctem/Monocle.svg?branch=develop)](https://travis-ci.org/Noctem/Monocle)
