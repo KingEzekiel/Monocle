@@ -11,10 +11,10 @@ POSTGRES: ALTER TABLE public.sightings ADD cp SmallInt;
           ALTER TABLE public.mystery_sightings ADD cp SmallInt;          
           ALTER TABLE public.mystery_sightings ADD cp_multiplier Double Precision;
           
-MYSQL:  ALTER TABLE public.sightings ADD cp SMALLINT;
-        ALTER TABLE public.sightings ADD cp_multiplier DOUBLE;
-        ALTER TABLE public.mystery_sightings ADD cp SMALLINT;
-        ALTER TABLE public.mystery_sightings ADD cp_multiplier DOUBLE;
+MYSQL:  ALTER TABLE sightings ADD cp SMALLINT;
+        ALTER TABLE sightings ADD cp_multiplier DOUBLE;
+        ALTER TABLE mystery_sightings ADD cp SMALLINT;
+        ALTER TABLE mystery_sightings ADD cp_multiplier DOUBLE;
 
 MILEAGE MAY VARY.  NOT TESTED ON MYSQL.  IF ANY ISSUES, PLEASE LET ME KNOW.  
 
