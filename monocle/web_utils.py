@@ -5,7 +5,7 @@ from time import time
 
 from monocle import sanitized as conf
 from monocle.db import get_forts, Pokestop, session_scope, Sighting, Spawnpoint
-from monocle.utils import Units, get_address
+from monocle.utils import Units, get_address, calc_pokemon_level
 from monocle.names import DAMAGE, MOVES, POKEMON
 
 if conf.MAP_WORKERS:
@@ -105,6 +105,9 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE):
         marker['move2'] = moves[move2]
         marker['damage1'] = damage[move1]
         marker['damage2'] = damage[move2]
+    if pokemon.cp:
+        marker['cp'] = pokemon.cp
+        marker['level'] = calc_pokemon_level(pokemon.cp_multiplier)
     return marker
 
 
@@ -185,4 +188,3 @@ def sighting_to_report_marker(sighting):
         'lat': sighting.lat,
         'lon': sighting.lon,
     }
-
