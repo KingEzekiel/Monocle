@@ -1,4 +1,4 @@
-THIS CHANGE REQUIRES YOU TO UPDATE YOUR DB TO ALLOW FOR LEVEL AND CP.  
+THIS CHANGE REQUIRES YOU TO UPDATE YOUR DB TO ALLOW FOR FORM, LEVEL AND CP.  
 YOU CAN USE PGADMIN/SQLWORKBENCH/OTHER TOOL OF CHOICE TO ADD THE FOLLOWING COLUMNS TO BOTH SIGHTINGS AND MYSTERY SIGHTINGS:
 
 -cp (SmallInt for POSTGRES.  MYSQL users, SMALLINT)
@@ -8,14 +8,18 @@ IF YOU PREFER CLI, THIS SHOULD DO THE TRICK (MAKE SURE YOU ARE IN YOUR DB VIA PS
 
 POSTGRES: ALTER TABLE public.sightings ADD cp SmallInt;
           ALTER TABLE public.sightings ADD cp_multiplier Double Precision;
-          ALTER TABLE public.mystery_sightings ADD cp SmallInt;          
+          ALTER TABLE public.sightings ADD form SmallInt;
+          ALTER TABLE public.mystery_sightings ADD cp SmallInt;
           ALTER TABLE public.mystery_sightings ADD cp_multiplier Double Precision;
+          ALTER TABLE public.mystery_sightigns ADD form SmallInt;
           
 MYSQL:  ALTER TABLE sightings ADD cp SMALLINT;
         ALTER TABLE sightings ADD cp_multiplier DOUBLE;
+        ALTER TABLE sightings ADD form SMALLINT;
         ALTER TABLE mystery_sightings ADD cp SMALLINT;
         ALTER TABLE mystery_sightings ADD cp_multiplier DOUBLE;
-
+        ALTER TABLE mystery_sightings ADD form SMALLINT;
+        
 MILEAGE MAY VARY.  NOT TESTED ON MYSQL.  IF ANY ISSUES, PLEASE LET ME KNOW.  
 
 Requires PGScout be installed to return Level30 data.  
