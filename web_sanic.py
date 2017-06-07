@@ -168,6 +168,7 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE, trash
         'expires_at': pokemon['expire_timestamp'],
     }
     move1 = pokemon['move_1']
+    marker['form'] = pokemon['form']
     if move1:
         move2 = pokemon['move_2']
         marker['atk'] = pokemon['atk_iv']
@@ -179,7 +180,6 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE, trash
         marker['damage2'] = damage[move2]
         marker['cp'] = pokemon['cp']
         marker['level'] = calc_pokemon_level(pokemon['cp_multiplier'])
-        marker['form'] = pokemon['form']
     return marker
 
 
