@@ -80,7 +80,7 @@ function getPopupContent (item) {
     var content = '<b>' + item.name + '</b> - <a href="https://pokemongo.gamepress.gg/pokemon/' + item.pokemon_id + '">#' + item.pokemon_id + '</a>';
     
     if (item.pokemon_id == 201){                                                          
-        content += ' - Form: ' + item.form + '<br>';                                         
+        content += ' - Form: ' + item.form;                                         
     }                                                                                     
     if (item.atk != undefined){                                                           
         var totaliv = 100 * (item.atk + item.def + item.sta) / 45;                        
