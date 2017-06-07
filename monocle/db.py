@@ -227,6 +227,7 @@ class Sighting(Base):
     move_2 = Column(SmallInteger)
     cp = Column(SmallInteger)
     cp_multiplier = Column(FLOAT_TYPE)
+    form = Column(SmallInteger)
 
     __table_args__ = (
         UniqueConstraint(
@@ -257,6 +258,7 @@ class Mystery(Base):
     move_2 = Column(SmallInteger)
     cp = Column(SmallInteger)
     cp_multiplier = Column(FLOAT_TYPE)
+    form = Column(SmallInteger)
 
     __table_args__ = (
         UniqueConstraint(
@@ -360,7 +362,8 @@ def add_sighting(session, pokemon):
         move_1=pokemon.get('move_1'),
         move_2=pokemon.get('move_2'),
         cp=pokemon.get('cp'),
-        cp_multiplier=pokemon.get('cp_multiplier')
+        cp_multiplier=pokemon.get('cp_multiplier'),
+        form=pokemon.get('form')
     )
     session.add(obj)
     SIGHTING_CACHE.add(pokemon)
@@ -461,7 +464,8 @@ def add_mystery(session, pokemon):
         move_1=pokemon.get('move_1'),
         move_2=pokemon.get('move_2'),
         cp=pokemon.get('cp'),
-        cp_multiplier=pokemon.get('cp_multiplier')
+        cp_multiplier=pokemon.get('cp_multiplier'),
+        form=pokemon.get('form')
     )
     session.add(obj)
     MYSTERY_CACHE.add(pokemon)

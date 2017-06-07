@@ -107,6 +107,7 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE):
         marker['damage2'] = damage[move2]
         marker['cp'] = pokemon.cp
         marker['level'] = calc_pokemon_level(pokemon.cp_multiplier)
+        marker['form'] = pokemon.form
     return marker
 
 
