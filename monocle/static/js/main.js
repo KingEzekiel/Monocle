@@ -78,16 +78,22 @@ function getPopupContent (item) {
     var seconds = parseInt(diff - (minutes * 60));
     var expires_at = minutes + 'm ' + seconds + 's';
     var content = '<b>' + item.name + '</b> - <a href="https://pokemongo.gamepress.gg/pokemon/' + item.pokemon_id + '">#' + item.pokemon_id + '</a>';
-    if(item.atk != undefined){
-        var totaliv = 100 * (item.atk + item.def + item.sta) / 45;
-        content += ' - <b>' + totaliv.toFixed(2) + '%</b><br>';
-        content += 'Disappears in: ' + expires_at + '<br>';
-        content += 'Move 1: ' + item.move1 + ' ( ' + item.damage1 + ' dps )<br>';
-        content += 'Move 2: ' + item.move2 + ' ( ' + item.damage2 + ' dps )<br>';
-        content += 'IV: ' + item.atk + ' atk, ' + item.def + ' def, ' + item.sta + ' sta<br>'
+    
+    if (item.pokemon_id == 201){                                                          
+        content += ' - Form: ' + item.form + '<br>';                                         
+    }                                                                                     
+    if (item.atk != undefined){                                                           
+        var totaliv = 100 * (item.atk + item.def + item.sta) / 45;                        
+        content += ' - <b>' + totaliv.toFixed(2) + '%</b></br>';                          
+        content += 'Disappears in: ' + expires_at + '<br>';                               
+        content += 'Quick Move: ' + item.move1 + '</br>';                                 
+        content += 'Charge Move: ' + item.move2 + '<br>';
+        content += 'IV: ' + item.atk + '/' + item.def + '/' + item.sta + '<br>';
+        content += 'CP: ' + item.cp + ' | Lvl: ' + item.level + '<br>';
     } else {
         content += '<br>Disappears in: ' + expires_at + '<br>';
     }
+
     content += '<a href="#" data-pokeid="'+item.pokemon_id+'" data-newlayer="Hidden" class="popup_filter_link">Hide</a>';
     content += '&nbsp; | &nbsp;';
 
