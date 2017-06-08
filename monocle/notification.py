@@ -788,7 +788,7 @@ class Notifier:
             data['message']['gender'] = pokemon['gender']
             data['message']['form'] = pokemon['form']
             data['message']['cp'] = pokemon['cp']
-            data['message']['level'] = calc_pokemon_level(pokemon['cp_multiplier'])
+            data['message']['pokemon_level'] = calc_pokemon_level(pokemon['cp_multiplier'])
         except KeyError:
             pass
 
