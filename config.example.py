@@ -104,7 +104,13 @@ ENCOUNTER = None
 # MUST MATCH YOUR PGSCOUT CONFIG.JSON.  Will encounter based on ENCOUNTER_IDs above.  
 # If encounter fails, worker.py will revert to the original worker with the sighting and encounter
 # but will not return any move/IV data (so your hooks dont get improper info)
-PGSCOUT_PORT ='1234' 
+PGSCOUT_PORT ='1234'
+
+# Set the connection timeout to wait on a response from PGScout.  Default is 36 seconds.
+# Timeout will be connection dependent, proxy dependent, etc.  I recommend keeping it at the default.
+# Going too high will certainly guarantee a response from a Scout but will lead to greater inefficiency
+# and instability for Monocle
+#PGSCOUT_TIMEOUT = 36
 
 # PokéStops
 SPIN_POKESTOPS = True  # spin all PokéStops that are within range
