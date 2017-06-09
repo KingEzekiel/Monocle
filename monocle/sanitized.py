@@ -197,7 +197,7 @@ _defaults = {
     'PB_API_KEY': None,
     'PB_CHANNEL': None,
     'PGSCOUT_PORT': None,
-    'PGSCOUT_TIMEOUT': 36,
+    'PGSCOUT_TIMEOUT': 40,
     'PLAYER_LOCALE': {'country': 'US', 'language': 'en', 'timezone': 'America/Denver'},
     'PROVIDER': None,
     'PROXIES': None,
