@@ -897,7 +897,7 @@ class Worker:
                             'spawn_point_id': spawn_id,
                             'latitude': str(pokemon['lat']),
                             'longitude': str(pokemon['lon'])},
-                    timeout=35) as resp:
+                    timeout=conf.PGSCOUT_TIMEOUT) as resp:
                 response = await resp.json(loads=json_loads)
             try:
                 pokemon['move_1'] = response['move_1']
