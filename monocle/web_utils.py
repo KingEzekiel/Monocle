@@ -96,7 +96,8 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE):
         'expires_at': pokemon.expire_timestamp,
     }
     move1 = pokemon.move_1
-    marker['form'] = pokemon.form
+    if (pokemon['form'] > 0):
+        marker['form'] = chr(pokemon['form']+64)
     if pokemon.move_1:
         move2 = pokemon.move_2
         marker['atk'] = pokemon.atk_iv
