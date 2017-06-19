@@ -96,6 +96,8 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE):
         'expires_at': pokemon.expire_timestamp,
     }
     move1 = pokemon.move_1
+    if pokemon.form:
+        marker['form'] = chr(pokemon.form+64)
     if pokemon.move_1:
         move2 = pokemon.move_2
         marker['atk'] = pokemon.atk_iv
@@ -105,6 +107,8 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE):
         marker['move2'] = moves[move2]
         marker['damage1'] = damage[move1]
         marker['damage2'] = damage[move2]
+        marker['cp'] = pokemon.cp
+        marker['level'] = pokemon.level
     return marker
 
 
@@ -185,4 +189,3 @@ def sighting_to_report_marker(sighting):
         'lat': sighting.lat,
         'lon': sighting.lon,
     }
-
