@@ -12,7 +12,6 @@ from monocle import sanitized as conf
 from monocle.bounds import center
 from monocle.names import DAMAGE, MOVES, POKEMON
 from monocle.web_utils import get_scan_coords, get_worker_markers, Workers, get_args
-from monocle.utils import calc_pokemon_level
 
 env = Environment(loader=PackageLoader('monocle', 'templates'))
 app = Sanic(__name__)
@@ -97,7 +96,7 @@ async def pokemon_data(request, _time=time):
     last_id = request.args.get('last_id', 0)
     async with app.pool.acquire() as conn:
         results = await conn.fetch('''
-            SELECT id, pokemon_id, expire_timestamp, lat, lon, atk_iv, def_iv, sta_iv, move_1, move_2, cp, cp_multiplier, form
+            SELECT id, pokemon_id, expire_timestamp, lat, lon, atk_iv, def_iv, sta_iv, move_1, move_2, cp, level, form
             FROM sightings
             WHERE expire_timestamp > {} AND id > {}
         '''.format(_time(), last_id))
@@ -180,7 +179,7 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE, trash
         marker['damage1'] = damage[move1]
         marker['damage2'] = damage[move2]
         marker['cp'] = pokemon['cp']
-        marker['level'] = calc_pokemon_level(pokemon['cp_multiplier'])
+        marker['level'] = pokemon['level']
     return marker
 
 
