@@ -1,23 +1,31 @@
+***************************
+IF YOU HAVE USED THIS BRANCH PREVIOUSLY TO 19 JUN, YOU WILL HAVE TO MAKE UPDATES FOLLOWING THE NEXT FEW COMMITS.  IF YOU ARE STARTING NEW THEN YOU SHOULD HAVE NO ISSUES.
+***************************
+***************************
+THE NEWEST CHANGE CAN BE CONDUCTED BY CHANGING THE cp_multiplier COLUMN TO A SMALLINT AND RENAMING IT level (OR DELETE THE cp_multiplier AND MAKE A NEW COLUMN level, AS A SMALLINT)
+***************************
+
 THIS CHANGE REQUIRES YOU TO UPDATE YOUR DB TO ALLOW FOR FORM, LEVEL AND CP.  
 YOU CAN USE PGADMIN/SQLWORKBENCH/OTHER TOOL OF CHOICE TO ADD THE FOLLOWING COLUMNS TO BOTH SIGHTINGS AND MYSTERY SIGHTINGS:
 
 -cp (SmallInt for POSTGRES.  MYSQL users, SMALLINT)
--cp_multiplier (Double Precision for POSTGRES. MYSQL users, DOUBLE)
+-level (SmallInt for POSTGRES. MYSQL users, SMALLINT)
+-form (SmallInt for POSTGRES. MYSQL users, SMALLINT)
 
 IF YOU PREFER CLI, THIS SHOULD DO THE TRICK (MAKE SURE YOU ARE IN YOUR DB VIA PSQL):
 
 POSTGRES: ALTER TABLE public.sightings ADD cp SmallInt;
-          ALTER TABLE public.sightings ADD cp_multiplier Double Precision;
+          ALTER TABLE public.sightings ADD level SmallInt;
           ALTER TABLE public.sightings ADD form SmallInt;
           ALTER TABLE public.mystery_sightings ADD cp SmallInt;
-          ALTER TABLE public.mystery_sightings ADD cp_multiplier Double Precision;
+          ALTER TABLE public.mystery_sightings ADD level SmallInt;
           ALTER TABLE public.mystery_sightigns ADD form SmallInt;
           
 MYSQL:  ALTER TABLE sightings ADD cp SMALLINT;
-        ALTER TABLE sightings ADD cp_multiplier DOUBLE;
+        ALTER TABLE sightings ADD level SMALLINT;
         ALTER TABLE sightings ADD form SMALLINT;
         ALTER TABLE mystery_sightings ADD cp SMALLINT;
-        ALTER TABLE mystery_sightings ADD cp_multiplier DOUBLE;
+        ALTER TABLE mystery_sightings ADD level SMALLINT;
         ALTER TABLE mystery_sightings ADD form SMALLINT;
         
 MILEAGE MAY VARY.  NOT TESTED ON MYSQL.  IF ANY ISSUES, PLEASE LET ME KNOW.  
