@@ -910,7 +910,7 @@ class Worker:
                 pokemon['gender'] = response['gender']
                 pokemon['form'] = response.get('form')
                 pokemon['cp'] = response.get('cp')
-                pokemon['cp_multiplier'] = response.get('cp_multiplier')
+                pokemon['level'] = calc_pokemon_level(response.get('cp_multiplier'))
             except KeyError:
                 self.log.error('Missing Pokemon data in PGScout response.')
         except Exception:
