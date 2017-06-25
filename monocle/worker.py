@@ -12,7 +12,7 @@ from cyrandom import choice, randint, uniform
 from pogeo import get_distance
 
 from .db import FORT_CACHE, MYSTERY_CACHE, SIGHTING_CACHE
-from .utils import round_coords, load_pickle, get_device_info, get_start_coords, Units, randomize_point, calc_pokemon_level
+from .utils import round_coords, load_pickle, get_device_info, get_start_coords, Units, randomize_point
 from .shared import get_logger, LOOP, SessionManager, run_threaded, ACCOUNTS
 from . import altitudes, avatar, bounds, db_proc, spawns, sanitized as conf
 
@@ -360,7 +360,7 @@ class Worker:
                 # request 6: level_up_rewards
                 request = self.api.create_request()
                 request.level_up_rewards(level=self.player_level)
-                await self.call(request, settings=True)
+                await self.call(request, settings=True, get_inbox=True)
                 await self.random_sleep(.45, .7)
             else:
                 self.log.warning('No player level')
@@ -750,7 +750,7 @@ class Worker:
         diff = self.last_gmo + self.scan_delay - time()
         if diff > 0:
             await sleep(diff, loop=LOOP)
-        responses = await self.call(request)
+        responses = await self.call(request, get_inbox=True)
         self.last_gmo = self.last_request
 
         try:
@@ -914,7 +914,7 @@ class Worker:
         request.fort_details(fort_id = pokestop.id,
                              latitude = pokestop_location[0],
                              longitude = pokestop_location[1])
-        responses = await self.call(request, action=1.2)
+        responses = await self.call(request, action=1.2, get_inbox=True)
         name = responses['FORT_DETAILS'].name
 
         request = self.api.create_request()
@@ -923,7 +923,7 @@ class Worker:
                             player_longitude = self.location[1],
                             fort_latitude = pokestop_location[0],
                             fort_longitude = pokestop_location[1])
-        responses = await self.call(request, action=2)
+        responses = await self.call(request, action=2, get_inbox=True)
 
         try:
             result = responses['FORT_SEARCH'].result
@@ -979,7 +979,7 @@ class Worker:
                                     player_latitude=self.location[0],
                                     player_longitude=self.location[1])
 
-        responses = await self.call(request, action=2.25)
+        responses = await self.call(request, action=2.25, get_inbox=True)
 
         try:
             pdata = responses['ENCOUNTER'].wild_pokemon.pokemon_data
@@ -1017,7 +1017,7 @@ class Worker:
         for item, count in rec_items.items():
             request = self.api.create_request()
             request.recycle_inventory_item(item_id=item, count=count)
-            responses = await self.call(request, action=2)
+            responses = await self.call(request, action=2, get_inbox=True)
 
             try:
                 if responses['RECYCLE_INVENTORY_ITEM'].result != 1:
@@ -1043,7 +1043,7 @@ class Worker:
             if inc.item_id == 901 or egg.egg_km_walked_target > 9:
                 request = self.api.create_request()
                 request.use_item_egg_incubator(item_id=inc.id, pokemon_id=egg.id)
-                responses = await self.call(request, action=4.5)
+                responses = await self.call(request, action=4.5, get_inbox=True)
 
                 try:
                     ret = responses['USE_ITEM_EGG_INCUBATOR'].result
@@ -1120,7 +1120,7 @@ class Worker:
 
         request = self.api.create_request()
         request.verify_challenge(token=token)
-        await self.call(request, action=4)
+        await self.call(request, action=4, get_inbox=True)
         self.update_accounts_dict()
         self.log.warning("Successfully solved CAPTCHA")
 
