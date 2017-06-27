@@ -1,3 +1,4 @@
+//intial declarations
 var _last_pokemon_id = 0;
 var _pokemon_count = 248;
 var _WorkerIconUrl = 'https://raw.githubusercontent.com/Avatar690/monocle-icons/master/assets/ball.png';
@@ -5,14 +6,14 @@ var _NotificationIconUrl = 'https://raw.githubusercontent.com/Avatar690/monocle-
 var _PokestopIconUrl = 'https://raw.githubusercontent.com/Avatar690/monocle-icons/master/assets/stop.png';
 var _NotificationID = [0]; //This is the default list for notifications
 var togglegym = 0;
+var toggleraid = 0;
 
 //IV control lists, rare shows iv if it's %95+, ultralist shows ivs always, and hidden100 is the blacklist for always showing iv of 100% pokemons
 //var rarelist = [228, 231, 4, 176,179,133, 116, 95, 237, 158,159,157,156, 154, 155, 152,153, 79, 123, 216, 133, 149, 83, 59, 62, 65, 68, 76, 89, 103, 112, 130, 131, 137, 143, 144, 145, 146, 150, 151, 26, 31, 34, 45, 71, 94, 113, 115, 128, 139, 141, 142, 58, 129, 63, 102, 111, 125, 147, 148, 66, 154,157,160,181,186,199,208,212,214,229,230,232,233,241,242,246,247,248, 217];
 //var ultralist = [147, 217, 147, 196, 197, 137, 113, 149, 83, 59, 68,  65, 76, 89, 103, 130, 131, 143, 144, 145, 146, 150, 151, 3, 6, 9, 26, 45, 94, 115, 128, 139, 141, 142, 154,157,160,181,186,199,208,212,214,229,230,233,241,242,246,247,248, 201]
 //var hidden100 = [10, 11, 13, 14, 16, 17, 41, 161, 163, 165,167,177,183,190,194, 198, 220];
-//pokemon to report IV on (need to make this a jsvar)
-//var ivlist = [6,59,65,68,76,87,89,91,106,107,112,113,130,131,134,137,139,141,143,144,145,146,147,148,149,150,151,157,176,179,180,181,196,197,201,214,232,237,241,242,243,244,245,246,247,248,249,250,251]
-
+//end declarations
+//start icons
 var PokemonIcon = L.Icon.extend({
     options: {
         popupAnchor: [0, -15]
@@ -38,6 +39,7 @@ var FortIcon = L.Icon.extend({
         className: 'fort-icon'
     }
 });
+
 var WorkerIcon = L.Icon.extend({
     options: {
         iconSize: [20, 20],
@@ -45,6 +47,7 @@ var WorkerIcon = L.Icon.extend({
         iconUrl: _WorkerIconUrl
     }
 });
+
 var NotificationIcon = L.Icon.extend({
     options: {
         iconSize: [30, 30],
@@ -52,6 +55,7 @@ var NotificationIcon = L.Icon.extend({
         iconUrl: _NotificationIconUrl
     }
 });
+
 var PokestopIcon = L.Icon.extend({
     options: {
         iconSize: [10, 20],
@@ -59,8 +63,7 @@ var PokestopIcon = L.Icon.extend({
         iconUrl: _PokestopIconUrl
     }
 });
-
-
+//end icons
 var markers = {};
 var overlays = {
     Pokemon: L.markerClusterGroup({ disableClusteringAtZoom: 12,spiderLegPolylineOptions: { weight: 1.5, color: '#fff', opacity: 0.5 },zoomToBoundsOnClick: false }),
@@ -128,10 +131,9 @@ function getOpacity (diff) {
     if (diff > 300 || getPreference('FIXED_OPACITY') === "1") {
         return 1;
     }
-    return 0.5 + diff / 600;
+    return 0.5 + diff / 800;
 }
-
-
+//start markers
 function PokemonMarker (raw) {
 /*    var ivrange = 0;
 //    var rare = "notrare";
@@ -219,7 +221,7 @@ function PokemonMarker (raw) {
         } else {
             overlays.Pokemon.removeLayer(marker);
             overlays.Pokemon.refreshClusters();
-            markers[marker.raw.id] = undefined;
+            delete markers[marker.raw.id];
             clearInterval(marker.opacityInterval);
         }
     }, 2500);
@@ -256,7 +258,8 @@ function WorkerMarker (raw) {
         .bindPopup('<b>Worker ' + raw.worker_no + '</b><br>time: ' + raw.time + '<br>speed: ' + raw.speed + '<br>total seen: ' + raw.total_seen + '<br>visits: ' + raw.visits + '<br>seen here: ' + raw.seen_here);
     return group;
 }
-
+//end markers
+//add functions
 function addPokemonToMap (data, map) {
     data.forEach(function (item) {
         // Already placed? No need to do anything, then
@@ -274,7 +277,6 @@ function addPokemonToMap (data, map) {
         _updateTimeInterval = setInterval(updateTime, 1000);
     }
 }
-
 
 function addGymsToMap (data, map) {
     data.forEach(function (item) {
@@ -337,7 +339,8 @@ function addWorkersToMap (data, map) {
         marker.addTo(overlays.Workers);
     });
 }
-
+//end add functions
+//get functions
 function getPokemon () {
     if (overlays.Pokemon.hidden) {
         return;
@@ -406,7 +409,7 @@ function getWorkers() {
         addWorkersToMap(data, map);
     });
 }
-
+//end get functions
 //Coords-parsing format is url.com/?lat=1234.56&lon=9.87654&zoom=13
 var params = {};
 window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m, key, value) {
@@ -426,9 +429,7 @@ if(parseFloat(params.lat) && parseFloat(params.lon)){
 else{
     var map = L.map('main-map', {preferCanvas: true, maxZoom: 18,}).setView(_MapCoords, 12.5);
 }
-
-
-
+//end coords parsing
 
 overlays.Pokemon.addTo(map);
 overlays.Gyms.addTo(map);
@@ -460,6 +461,7 @@ else
 	});
 }
 layer.addTo(map);
+//end map tilepush
 
 //Uncomment lines here to re-add layers
 map.whenReady(function () {
@@ -503,7 +505,7 @@ map.whenReady(function () {
     //setInterval(getGyms, 600000);
     //setInterval(getWorkers, 14000);
 });
-
+//button handlers
 $("#settings>ul.nav>li>a").on('click', function(){
     // Click handler for each tab button.
     $(this).parent().parent().children("li").removeClass('active');
@@ -586,7 +588,7 @@ $('#settings').on('click', '.settings-panel button', function () {
     }
 
 });
-
+//end button handlers
 function moveToLayer(id, layer){
     //setPreference("filter-"+id, layer);
     layer = layer.toLowerCase();
@@ -648,7 +650,6 @@ function populateSettingsPanels(){
     }
 }
 
-
 function setSettingsDefaults(){
     for (var i = 1; i <= _pokemon_count; i++){
         _defaultSettings['filter-'+i] = (_defaultSettings['TRASH_IDS'].indexOf(i) > -1) ? "trash" : "pokemon";
@@ -679,9 +680,7 @@ function setSettingsDefaults(){
             value = "1";
         item.children("button").removeClass("active").filter("[data-value='"+value+"']").addClass("active");
     });
-
 }
-
 
 function getPreference(key, ret){
     return localStorage.getItem(key) ? localStorage.getItem(key) : (key in _defaultSettings ? _defaultSettings[key] : ret);
@@ -739,7 +738,6 @@ function time(s) {
     return new Date(s * 1e3).toISOString().slice(-13, -5);
 }
 
-
 //Notifications on Desktop
 var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 if (!isMobile) {
@@ -777,8 +775,7 @@ function spawnNotification(raw) {
 		setTimeout(n.close.bind(n), 600000);
 
 }
-
-
+//end desktop notifications
 //Distance notifications
 var coord;
 function saveCoords() {
@@ -857,7 +854,7 @@ map.on("contextmenu", function (event) {
   var clickcoord = event.latlng.toString();
   $( "#saved" ).text(clickcoord);
 });
-
+//end distance notifications
 
 //Populate settings and defaults
 populateSettingsPanels();
