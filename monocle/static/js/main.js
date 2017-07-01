@@ -12,6 +12,11 @@ var toggleraid = 0;
 //var rarelist = [228, 231, 4, 176,179,133, 116, 95, 237, 158,159,157,156, 154, 155, 152,153, 79, 123, 216, 133, 149, 83, 59, 62, 65, 68, 76, 89, 103, 112, 130, 131, 137, 143, 144, 145, 146, 150, 151, 26, 31, 34, 45, 71, 94, 113, 115, 128, 139, 141, 142, 58, 129, 63, 102, 111, 125, 147, 148, 66, 154,157,160,181,186,199,208,212,214,229,230,232,233,241,242,246,247,248, 217];
 //var ultralist = [147, 217, 147, 196, 197, 137, 113, 149, 83, 59, 68,  65, 76, 89, 103, 130, 131, 143, 144, 145, 146, 150, 151, 3, 6, 9, 26, 45, 94, 115, 128, 139, 141, 142, 154,157,160,181,186,199,208,212,214,229,230,233,241,242,246,247,248, 201]
 //var hidden100 = [10, 11, 13, 14, 16, 17, 41, 161, 163, 165,167,177,183,190,194, 198, 220];
+
+var currentLocationMarker;
+var currentLocationCircle;
+var pokemonInterval;
+var nearbyInterval;
 //end declarations
 //start icons
 var PokemonIcon = L.Icon.extend({
@@ -410,6 +415,7 @@ function getWorkers() {
     });
 }
 //end get functions
+
 //Coords-parsing format is url.com/?lat=1234.56&lon=9.87654&zoom=13
 var params = {};
 window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m, key, value) {
@@ -423,11 +429,11 @@ if(parseFloat(params.lat) && parseFloat(params.lon)){
     var map = new L.Map('main-map', {
         center: [parseFloat(params.lat), parseFloat(params.lon)], 
         zoom: parsezoom,
-		maxZoom: 18,
+		maxZoom: 18
     });
 }
 else{
-    var map = L.map('main-map', {preferCanvas: true, maxZoom: 18,}).setView(_MapCoords, 12.5);
+    var map = L.map('main-map', {preferCanvas: true, maxZoom: 18}).setView(_MapCoords, 12.5);
 }
 //end coords parsing
 
@@ -466,7 +472,7 @@ layer.addTo(map);
 //Uncomment lines here to re-add layers
 map.whenReady(function () {
     $('.my-location').on('click', function () {
-        map.locate({ enableHighAccurracy: true, setView: true });
+        GetCurrentLocation();
     });
 
     overlays.Gyms.once('add', function(e) {
@@ -487,25 +493,93 @@ map.whenReady(function () {
 			}
 	});
 
-    //overlays.Spawns.once('add', function(e) {
+    $('.toggle-raid').on('click', function(){
+	if (toggleraid == 0) {
+		toggleraid = 1;
+		} else {
+			toggleraid = 0;
+			}
+	});	
+	
+    /*overlays.Spawns.once('add', function(e) {
     //    getSpawnPoints();
     //})
     //overlays.Pokestops.once('add', function(e) {
     //    getPokestops();
-    //})
+    })*/
 
-    getScanAreaCoords();
     //getWorkers();
 
     overlays.Workers.hidden = true;
     getPokemon();
     //getGyms();
 
-    setInterval(getPokemon, 30000);
+    setInterval(getPokemon, 30500);
     //setInterval(getGyms, 600000);
     //setInterval(getWorkers, 14000);
+    
+    currentLocationMarker = L.marker([map.getCenter().lat, map.getCenter().lng]).addTo(map);
+    
+    map.on('locationfound', function(event){
+        if (typeof currentLocationMarker !== 'undefined') {
+            currentLocationMarker.remove();
+        }
+        
+        if (typeof currentLocationCircle !== 'undefined') {
+            currentLocationCircle.remove();
+        }
+        
+        map.setZoom(13);
+        
+        var lat = event.latitude; //map.getCenter().lat;
+        var lng = event.longitude; //map.getCenter().lng;
+        
+        currentLocationMarker = L.marker([lat, lng]).addTo(map);
+        getPokemon();
+		getScanAreaCoords();
+        pokemonInterval = setInterval(getPokemon, 30500);
+/*        
+        currentLocationCircle = L.circle([lat, lng], {
+            color: 'green',
+            fillColor: 'green',
+            fillOpacity: 0.1,
+            radius: 1500
+        }).addTo(map);
+  */      
+                 
+    });
+    
+    map.on('moveend', function (e) {
+        _last_pokemon_id = 0;
+		getScanAreaCoords();  
+    });
+    
+    GetCurrentLocation();
 });
-//button handlers
+
+$('.my-lists').on('click', function () {
+    ShowLists();
+});
+
+$("#lists>ul.nav>li>a").on('click', function(){
+    // Click handler for each tab button.
+    $(this).parent().parent().children("li").removeClass('active');
+    $(this).parent().addClass('active');
+    var panel = $(this).data('panel');
+    var item = $("#lists>.settings-panel").removeClass('active')
+        .filter("[data-panel='"+panel+"']").addClass('active');
+});
+
+$("#lists_close_btn").on('click', function(){
+    // 'X' button on Settings panel
+    
+    clearInterval(nearbyInterval);
+    
+    $("#lists").animate({
+        opacity: 0
+    }, 250, function(){ $(this).hide(); });
+});
+
 $("#settings>ul.nav>li>a").on('click', function(){
     // Click handler for each tab button.
     $(this).parent().parent().children("li").removeClass('active');
@@ -579,7 +653,7 @@ $('#settings').on('click', '.settings-panel button', function () {
     item.parent().children("button").removeClass("active");
     item.addClass("active");
 
-    if (key.indexOf('filter-') > -1){
+    if ((typeof currentLocationMarker !== 'undefined') & (key.indexOf('filter-') > -1)){
         // This is a pokemon's filter button
         moveToLayer(id, value);
 		setPreference(key, value);
@@ -588,6 +662,7 @@ $('#settings').on('click', '.settings-panel button', function () {
     }
 
 });
+
 //end button handlers
 function moveToLayer(id, layer){
     //setPreference("filter-"+id, layer);
@@ -855,7 +930,138 @@ map.on("contextmenu", function (event) {
   $( "#saved" ).text(clickcoord);
 });
 //end distance notifications
+//begin nearby panel
+function GetCurrentLocation() {
+    map.locate({ enableHighAccurracy: true, setView: true });
+}
 
+function ShowLists() {
+    populateNearbyList();
+
+    // List button on bottom-left corner
+    $("#lists").show().animate({
+        opacity: 1
+    }, 250);
+
+    nearbyInterval = setInterval(function() {
+        populateNearbyList();
+    }, 1000);
+}
+
+function populateNearbyList(){
+    var pokemon = [];
+
+    var container = $('.settings-panel[data-panel="lists"]').children('.panel-body');
+    var newHtml = '';
+    
+    for(var k in markers) {
+        var m = markers[k];
+        if ((k.indexOf("pokemon-") > -1) && (m !== undefined) && (m.overlay !== "Hidden")){
+            var userPreference = getPreference('filter-'+m.raw.pokemon_id);
+            if (userPreference === 'pokemon'){
+                var pokeLat = m._latlng.lat;
+                var pokeLng = m._latlng.lng;
+                
+                //var dy = Math.abs(currentLocationMarker._latlng.lat - pokeLat);
+                //var dx = Math.abs(currentLocationMarker._latlng.lng - pokeLng);
+                
+                // Get distance
+                var distance = Number((CalcDistanceKm(pokeLat, pokeLng, currentLocationMarker._latlng.lat, currentLocationMarker._latlng.lng) * 0.62137).toFixed(2)); //dx + dy;
+                m.distance = distance;
+                
+                // Sort pokemon by distance
+                PushSort(pokemon, m);
+            }  
+        }
+    }
+    
+    if (pokemon.length > 0) {
+        for(var k in pokemon) {
+            var m = pokemon[k];
+                   
+            var distance = m.distance;
+            
+            var pokemon_id = m.raw.pokemon_id;
+            
+            var diff = (m.raw.expires_at - new Date().getTime() / 1000);
+            var minutes = parseInt(diff / 60);
+            var seconds = parseInt(diff - (minutes * 60));
+            var expires_at = minutes + 'm ' + seconds + 's';
+            
+            if ((minutes > 0) || (seconds > 0)) {
+                var partHtml = `<div class="text-center nearby" data-value="` + m.raw.id + `">
+                        <img style="float:left" data-value="` + m.raw.id + `" src="https://pkmref.com/images/set_1/` + pokemon_id + `.png">
+                        <div class="text-center" data-value="` + m.raw.id + `">
+                        <b>` + m.raw.name + `</b><br/>
+                        <b>Distance:</b> ` + distance + ` miles<br/>
+                        Disappears in: ` + expires_at + `<br/>
+                        </div>
+                    </div><br>
+                `;
+            
+                newHtml += partHtml;
+            }
+        }
+    }
+    else {
+        newHtml = '<div class="text-center">Nothing Nearby</div>';
+    }
+    
+    //newHtml += '</div>';
+    container.html(newHtml);
+    
+    $('.nearby').on('click', function(e){
+        // Get pokemon location
+        var m = markers[e.target.getAttribute('data-value')];
+        var lat = m.raw.lat;
+        var lng = m.raw.lon;
+        
+        // Set view to pokemon location
+        map.setView(new L.LatLng(lat, lng),14);
+        
+        m.openPopup();
+        
+        clearInterval(nearbyInterval);
+        
+        // Hide lists panel
+        $("#lists").animate({
+            opacity: 0
+        }, 250, function(){ $(this).hide(); });
+    });
+}
+
+function PushSort(arr, item)
+{
+    var added = false;
+    
+    if (arr.length > 0) {
+        for(var k in arr) {
+            var m = arr[k];
+            
+            if ((m !== undefined) && (m.distance !== undefined)) {
+                if (item.distance < m.distance) {
+                    arr.splice(k, 0, item);
+                    added = true;
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (!added) {
+        arr.push(item);
+    }
+}
+
+function CalcDistanceKm(lat1, lon1, lat2, lon2) {
+  var p = 0.017453292519943295;    // Math.PI / 180
+  var c = Math.cos;
+  var a = 0.5 - c((lat2 - lat1) * p)/2 + 
+          c(lat1 * p) * c(lat2 * p) * 
+          (1 - c((lon2 - lon1) * p))/2;
+
+  return 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
+}
 //Populate settings and defaults
 populateSettingsPanels();
 setSettingsDefaults();
