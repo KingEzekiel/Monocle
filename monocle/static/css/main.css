@@ -56,7 +56,7 @@
     background: #fff;
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
 }
-
+/*icons*/
 .leaflet-control-layers-toggle {
     background-image: url('../img/layers.png');
 }
@@ -80,7 +80,36 @@
 .telegram-icon {
     background-image: url('../img/telegram.png');
 }
+
+.my-settings {
+    background-image: url('../img/settings.png');
+}
+
+.my-lists {
+    background-image: url('../img/list.png');
+}
+
+.toggle-gym {
+    background-image: url('../img/gyms.png'); 
+}
+
+.toggle-raid {
+	background-image: url('../img/raid_egg.png');
+}
+/*end icons*/
 #settings{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1500;
+    display: none;
+    background: rgba(255, 255, 255, 1);
+    opacity: 0;
+}
+
+#lists{
     position: absolute;
     top: 0;
     left: 0;
@@ -104,6 +133,16 @@
 
 @media screen and (min-width: 481px) {
     #settings {
+        width: 450px;
+        transform: translate(-50%, -50%);
+        left: 50%;
+        top: 50%;
+        border-radius: 5px;
+        box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.55);
+        height: 525px;
+    }
+	
+    #lists {
         width: 450px;
         transform: translate(-50%, -50%);
         left: 50%;
@@ -153,10 +192,35 @@
     margin: 0;
     padding: 0;
 }
+/* for raids and gyms */
+.gymmarker {
+    position: absolute;
+    left: -16px;
+    top: -20px;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    width: 36px;
+}
 
+.gymmarker > img {
+    position: relative;
+    width: 36px;
+    height: 36px;
+}
+/* end raids and gyms */
 #settings>.page-header{
     padding-bottom: 5px;
     margin: 20px 0 10px;
+}
+
+#lists>.page-header{
+    padding-bottom: 5px;
+    margin: 20px 0 10px;
+}
+
+#lists_close_btn{
+    font-size: 38px;
 }
 
 #settings_close_btn{
@@ -175,18 +239,11 @@
     margin-bottom: 10px;
 }
 
-.my-settings {
-    background-image: url('../img/settings.png');
-}
-
-.toggle-gym {
-    background-image: url('../img/gyms.png'); 
-}
-
 .leaflet-control-layers-overlays>label{
     margin-bottom: 0;
     font-weight: initial;
 }
+/* IV text shading */
 .remaining_text_iv {
     border-radius: 25px;
     background-color: black;
@@ -247,4 +304,3 @@
     width:0px !important;
     height:0px !important;
 }
-
