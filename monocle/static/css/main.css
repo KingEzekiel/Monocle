@@ -153,6 +153,22 @@
     padding: 0;
 }
 
+.gymmarker {
+    position: absolute;
+    left: -16px;
+    top: -20px;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    width: 36px;
+}
+
+.gymmarker > img {
+    position: relative;
+    width: 36px;
+    height: 36px;
+}
+
 #settings>.page-header{
     padding-bottom: 5px;
     margin: 20px 0 10px;

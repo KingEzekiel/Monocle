@@ -830,8 +830,20 @@ class Worker:
                     if fort.id not in FORT_CACHE.pokestops:
                         pokestop = self.normalize_pokestop(fort)
                         db_proc.add(pokestop)
-                elif fort not in FORT_CACHE:
-                    db_proc.add(self.normalize_gym(fort))
+                else:
+                    if fort not in FORT_CACHE:
+                        db_proc.add(self.normalize_gym(fort))
+                    if fort.HasField('raid_info'):
+                        raid_info = fort.raid_info
+                        normalized_raid = self.normalize_raid(fort)
+                        if raid_info.HasField('raid_pokemon'):
+                            normalized_raid['pokemon_id'] = raid_info.raid_pokemon.pokemon_id
+                            normalized_raid['cp'] = raid_info.raid_pokemon.cp
+                            normalized_raid['move_1'] = raid_info.raid_pokemon.move_1
+                            normalized_raid['move_2'] = raid_info.raid_pokemon.move_2
+                        if normalized_raid not in RAID_CACHE:
+                            db_proc.add(normalized_raid)
+
 
             if more_points:
                 try:
@@ -1267,9 +1279,24 @@ class Worker:
             'lat': raw.latitude,
             'lon': raw.longitude,
             'team': raw.owned_by_team,
-            'prestige': raw.gym_points,
             'guard_pokemon_id': raw.guard_pokemon_id,
-            'last_modified': raw.last_modified_timestamp_ms // 1000,
+            'in_battle': raw.is_in_battle,
+            'slots_available': raw.gym_display.slots_available,
+            'time_ocuppied': raw.gym_display.occupied_millis // 1000,
+            'last_modified': raw.last_modified_timestamp_ms // 1000
+        }
+
+    @staticmethod
+    def normalize_raid(raw):
+        raid = raw.raid_info
+        return {
+            'type': 'raidinfo',
+            'external_id': raw.id,
+            'raid_seed': raid.raid_seed,
+            'raid_level': raid.raid_level,
+            'raid_spawn': raid.raid_spawn_ms // 1000,
+            'raid_start': raid.raid_battle_ms // 1000,
+            'raid_end': raid.raid_end_ms // 1000
         }
 
     @staticmethod

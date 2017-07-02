@@ -21,14 +21,14 @@ except AssertionError:
 log = get_logger(__name__)
 
 if conf.DB_ENGINE.startswith('mysql'):
-    from sqlalchemy.dialects.mysql import TINYINT, MEDIUMINT, BIGINT, DOUBLE
+    from sqlalchemy.dialects.mysql import TINYINT, MEDIUMINT, BIGINT, DOUBLE, BOOLEAN
 
     TINY_TYPE = TINYINT(unsigned=True)          # 0 to 255
     MEDIUM_TYPE = MEDIUMINT(unsigned=True)      # 0 to 4294967295
     HUGE_TYPE = BIGINT(unsigned=True)           # 0 to 18446744073709551615
     FLOAT_TYPE = DOUBLE(precision=17, scale=14, asdecimal=False)
 elif conf.DB_ENGINE.startswith('postgres'):
-    from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
+    from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, BOOLEAN
 
     class NumInt(TypeDecorator):
         '''Modify Numeric type for integers'''
@@ -191,10 +191,45 @@ class FortCache:
         except (FileNotFoundError, TypeError, KeyError):
             pass
 
+class RaidCache:
+    """Simple cache for storing raid info"""
+    def __init__(self):
+        self.raids = {}
+        self.class_version = 2
+        self.unpickle()
+
+    def __len__(self):
+        return len(self.raids)
+
+    def add(self, raid):
+        self.raids[raid['external_id']] = str(raid['raid_seed']) + str(raid.get('pokemon_id', 0))
+
+    def __contains__(self, raid):
+        try:
+            return self.raids[raid['external_id']] == str(raid['raid_seed']) + str(raid.get('pokemon_id', 0))
+        except KeyError:
+            return False
+
+    def pickle(self):
+        state = self.__dict__.copy()
+        state['db_hash'] = spawns.db_hash
+        state['bounds_hash'] = hash(bounds)
+        dump_pickle('forts', state)
+
+    def unpickle(self):
+        try:
+            state = load_pickle('raids', raise_exception=True)
+            if all((state['class_version'] == self.class_version,
+                    state['db_hash'] == spawns.db_hash,
+                    state['bounds_hash'] == hash(bounds))):
+                self.__dict__.update(state)
+        except (FileNotFoundError, TypeError, KeyError):
+            pass
 
 SIGHTING_CACHE = SightingCache()
 MYSTERY_CACHE = MysteryCache()
 FORT_CACHE = FortCache()
+RAID_CACHE = RaidCache()
 
 Base = declarative_base()
 
@@ -304,8 +339,10 @@ class FortSighting(Base):
     fort_id = Column(Integer, ForeignKey('forts.id'))
     last_modified = Column(Integer, index=True)
     team = Column(TINY_TYPE)
-    prestige = Column(MEDIUM_TYPE)
+    in_battle = Column(BOOLEAN, default=False)
     guard_pokemon_id = Column(TINY_TYPE)
+    slots_available = Column(TINY_TYPE)
+    time_ocuppied = Column(Integer)
 
     __table_args__ = (
         UniqueConstraint(
@@ -314,6 +351,24 @@ class FortSighting(Base):
             name='fort_id_last_modified_unique'
         ),
     )
+
+class RaidInfo(Base):
+    __tablename__ = 'raid_info'
+
+    id = Column(Integer, primary_key=True)
+    fort_id = Column(Integer, ForeignKey('forts.id'))
+    if conf.DB_ENGINE.startswith('mysql'):
+        raid_seed = Column(BIGINT)
+    elif conf.DB_ENGINE.startswith('postgres'):
+        raid_seed = Column(HUGE_TYPE)
+    raid_level = Column(TINY_TYPE)
+    raid_spawn = Column(Integer)
+    raid_start = Column(Integer, index=True)
+    raid_end = Column(Integer, index=True)
+    pokemon_id = Column(TINY_TYPE)
+    cp = Column(Integer)
+    move_1 = Column(SmallInteger)
+    move_2 = Column(SmallInteger)
 
 
 class Pokestop(Base):
@@ -494,13 +549,47 @@ def add_fort_sighting(session, raw_fort):
     obj = FortSighting(
         fort=fort,
         team=raw_fort['team'],
-        prestige=raw_fort['prestige'],
         guard_pokemon_id=raw_fort['guard_pokemon_id'],
         last_modified=raw_fort['last_modified'],
+        in_battle=raw_fort['in_battle'],
+        slots_available=raw_fort['slots_available'],
+        time_ocuppied=raw_fort['time_ocuppied']
     )
     session.add(obj)
     FORT_CACHE.add(raw_fort)
 
+def add_raid_info(session, raw_raid):
+    # Check if raid_seed exists
+    raid = session.query(RaidInfo) \
+        .filter(RaidInfo.raid_seed == raw_raid['raid_seed']) \
+        .first()
+
+    # Get fort id
+    fort = session.query(Fort) \
+        .filter(Fort.external_id == raw_raid['external_id']) \
+        .first()
+    if raid is None:
+        raid = RaidInfo(
+            fort_id=fort.id,
+            raid_seed=raw_raid['raid_seed'],
+            raid_level=raw_raid['raid_level'],
+            raid_spawn=raw_raid['raid_spawn'],
+            raid_start=raw_raid['raid_start'],
+            raid_end=raw_raid['raid_end'],
+            pokemon_id=raw_raid.get('pokemon_id'),
+            cp=raw_raid.get('cp'),
+            move_1=raw_raid.get('move_1'),
+            move_2=raw_raid.get('move_2')
+        )
+        RAID_CACHE.add(raw_raid)
+        session.add(raid)
+    else:
+        if raid.pokemon_id is None and raw_raid.get('pokemon_id') is not None:
+            raid.pokemon_id = raw_raid['pokemon_id']
+            raid.cp = raw_raid['cp']
+            raid.move_1 = raw_raid['move_1']
+            raid.move_2 = raw_raid['move_2']
+            RAID_CACHE.add(raw_raid)
 
 def add_pokestop(session, raw_pokestop):
     pokestop_id = raw_pokestop['external_id']
@@ -566,7 +655,6 @@ def _get_forts_sqlite(session):
             fs.fort_id,
             fs.id,
             fs.team,
-            fs.prestige,
             fs.guard_pokemon_id,
             fs.last_modified,
             f.lat,
@@ -587,9 +675,11 @@ def _get_forts(session):
             fs.fort_id,
             fs.id,
             fs.team,
-            fs.prestige,
             fs.guard_pokemon_id,
             fs.last_modified,
+            fs.in_battle,
+            fs.slots_available,
+            fs.time_ocuppied,
             f.lat,
             f.lon
         FROM fort_sightings fs
@@ -603,6 +693,27 @@ def _get_forts(session):
 
 get_forts = _get_forts_sqlite if DB_TYPE == 'sqlite' else _get_forts
 
+def get_raids_info(session):
+    return session.execute('''
+        SELECT
+            f.id,
+            ri.raid_start,
+            ri.raid_end,
+            ri.pokemon_id,
+            ri.cp,
+            ri.move_1,
+            ri.move_2,
+            ri.raid_level
+        FROM forts f
+        JOIN raid_info ri ON ri.fort_id = f.id
+        WHERE (ri.fort_id, ri.raid_start) IN (
+            SELECT
+                fort_id,
+                max(raid_start)
+            FROM raid_info
+            GROUP BY fort_id
+        );
+    ''').fetchall()
 
 def get_session_stats(session):
     query = session.query(func.min(Sighting.expire_timestamp),
