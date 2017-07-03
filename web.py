@@ -87,6 +87,9 @@ def pokemon_data():
 def gym_data():
     return jsonify(get_gym_markers())
 
+@app.route('/raid_data')
+def raid_data():
+    return jsonify(get_raids_markers())
 
 @app.route('/spawnpoints')
 def spawn_points():
