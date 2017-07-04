@@ -39,11 +39,8 @@ var PokemonIcon = L.Icon.extend({
 
 var FortIcon = L.Icon.extend({
     createIcon: function() {
-        iconSize: [20, 20],
         var div = document.createElement('div');
-        popupAnchor: [0, -10],
         div.innerHTML =
-        className: 'fort-icon'
             '<div class="gymmarker fort-icon" id="' + this.options.id + '">' +
             '<img src="' + this.options.iconUrl + '" />' +
             '</div>';
