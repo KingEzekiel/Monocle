@@ -560,7 +560,7 @@ map.whenReady(function () {
 		overlays.Gyms.hidden = false;
 		map.addLayer(overlays.Gyms);
 		getGyms();
-		setInterval(getGyms, 600000);
+		setInterval(getGyms, 120000);
 		togglegym = 1;
 		} else {
 			overlays.Gyms.hidden = true;
@@ -568,7 +568,7 @@ map.whenReady(function () {
 			togglegym = 0;
 			}
 	});
-
+/*
     $('.toggle-raid').on('click', function(){
 	if (toggleraid == 0) {
 		toggleraid = 1;
@@ -577,7 +577,7 @@ map.whenReady(function () {
 			}
 	});	
 	
-    /*overlays.Spawns.once('add', function(e) {
+    overlays.Spawns.once('add', function(e) {
     //    getSpawnPoints();
     //})
     //overlays.Pokestops.once('add', function(e) {
@@ -612,7 +612,7 @@ map.whenReady(function () {
         
         currentLocationMarker = L.marker([lat, lng]).addTo(map);
         getPokemon();
-		getScanAreaCoords();
+        getScanAreaCoords();
         pokemonInterval = setInterval(getPokemon, 30500);
 /*        
         currentLocationCircle = L.circle([lat, lng], {
