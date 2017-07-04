@@ -200,13 +200,13 @@
     text-align: center;
     margin: 0;
     padding: 0;
-    width: 18px;
+    width: 27px;
 }
 
 .gymmarker > img {
     position: relative;
-    width: 18px;
-    height: 18px;
+    width: 27px;
+    height: 27px;
 }
 /* end raids and gyms */
 #settings>.page-header{
