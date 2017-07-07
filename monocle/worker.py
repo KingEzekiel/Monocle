@@ -711,7 +711,7 @@ class Worker:
             err = str(e)
             self.log.error(err)
             print(err)
-            exit()
+            await sleep(10, loop=LOOP) 
         except (ex.MalformedResponseException, ex.UnexpectedResponseException) as e:
             self.log.warning('{} Giving up.', e)
             self.error_code = 'MALFORMED RESPONSE'
