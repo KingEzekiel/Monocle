@@ -13,6 +13,7 @@ from monocle.bounds import center
 from monocle.names import DAMAGE, MOVES, POKEMON
 from monocle.web_utils import get_scan_coords, get_worker_markers, Workers, get_args
 
+
 env = Environment(loader=PackageLoader('monocle', 'templates'))
 app = Sanic(__name__)
 app.static('/static', resource_filename('monocle', 'static'))
@@ -96,7 +97,7 @@ async def pokemon_data(request, _time=time):
     last_id = request.args.get('last_id', 0)
     async with app.pool.acquire() as conn:
         results = await conn.fetch('''
-            SELECT id, pokemon_id, expire_timestamp, lat, lon, form
+            SELECT id, pokemon_id, expire_timestamp, lat, lon, atk_iv, def_iv, sta_iv, move_1, move_2
             FROM sightings
             WHERE expire_timestamp > {} AND id > {}
         '''.format(_time(), last_id))
@@ -111,9 +112,11 @@ async def gym_data(request, names=POKEMON, _str=str):
                 fs.fort_id,
                 fs.id,
                 fs.team,
-                fs.prestige,
                 fs.guard_pokemon_id,
                 fs.last_modified,
+                fs.in_battle,
+                fs.slots_available,
+                fs.time_ocuppied,
                 f.lat,
                 f.lon
             FROM fort_sightings fs
@@ -127,14 +130,35 @@ async def gym_data(request, names=POKEMON, _str=str):
     return json([{
             'id': 'fort-' + _str(fort['fort_id']),
             'sighting_id': fort['id'],
-            'prestige': fort['prestige'],
             'pokemon_id': fort['guard_pokemon_id'],
             'pokemon_name': names[fort['guard_pokemon_id']],
             'team': fort['team'],
+            'in_battle': fort['in_battle'],
+            'slots_available': fort['slots_available'],
+            'time_ocuppied': fort['time_ocuppied'],
             'lat': fort['lat'],
             'lon': fort['lon']
     } for fort in results])
 
+@app.get('/raid_data')
+async def raid_data(request, names=POKEMON, _str=str, _time=time):
+    async with app.pool.acquire() as conn:
+        results = await conn.fetch('''
+        SELECT
+            f.id,
+            ri.raid_start,
+            ri.raid_end,
+            ri.pokemon_id,
+            ri.cp,
+            ri.move_1,
+            ri.move_2,
+            ri.raid_level
+        FROM forts f
+        JOIN raid_info ri ON ri.fort_id = f.id
+        WHERE ri.raid_start >= {}
+        OR ri.raid_end >= {}
+        '''.format(_time(), _time()))
+        return json(list(map(raid_to_marker, results)))
 
 @app.get('/spawnpoints')
 async def spawn_points(request, _dict=dict):
@@ -166,10 +190,33 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE, trash
         'lon': pokemon['lon'],
         'expires_at': pokemon['expire_timestamp'],
     }
-    if pokemon['form']:
-        marker['form'] = chr(pokemon['form']+64)
+    move1 = pokemon['move_1']
+    if move1:
+        move2 = pokemon['move_2']
+        marker['atk'] = pokemon['atk_iv']
+        marker['def'] = pokemon['def_iv']
+        marker['sta'] = pokemon['sta_iv']
+        marker['move1'] = moves[move1]
+        marker['move2'] = moves[move2]
+        marker['damage1'] = damage[move1]
+        marker['damage2'] = damage[move2]
     return marker
 
+def raid_to_marker(raid, names=POKEMON, moves=MOVES):
+    marker = {
+        'fort_id': raid['id'],
+        'raid_start': raid['raid_start'],
+        'raid_end': raid['raid_end'],
+        'raid_level': raid['raid_level']
+    }
+    pokemon_id = raid['pokemon_id']
+    if pokemon_id:
+        marker['pokemon_id'] = raid['pokemon_id']
+        marker['pokemon_name'] = names[raid['pokemon_id']]
+        marker['cp'] = raid['cp']
+        marker['move_1'] = moves[raid['move_1']]
+        marker['move_2'] = moves[raid['move_2']]
+    return marker
 
 @app.listener('before_server_start')
 async def register_db(app, loop):
