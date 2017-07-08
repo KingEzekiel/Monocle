@@ -693,14 +693,9 @@ def get_raids_info(session):
             ri.raid_level
         FROM forts f
         JOIN raid_info ri ON ri.fort_id = f.id
-        WHERE (ri.fort_id, ri.raid_start) IN (
-            SELECT
-                fort_id,
-                max(raid_start)
-            FROM raid_info
-            GROUP BY fort_id
-        );
-    ''').fetchall()
+        WHERE ri.raid_start >= {}
+        OR ri.raid_end >= {}
+    '''.format(time(), time())).fetchall()
 
 def get_session_stats(session):
     query = session.query(func.min(Sighting.expire_timestamp),
