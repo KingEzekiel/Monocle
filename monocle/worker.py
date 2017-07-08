@@ -11,7 +11,7 @@ from aiopogo.auth_ptc import AuthPtc
 from cyrandom import choice, randint, uniform
 from pogeo import get_distance
 
-from .db import FORT_CACHE, MYSTERY_CACHE, SIGHTING_CACHE
+from .db import FORT_CACHE, MYSTERY_CACHE, SIGHTING_CACHE, RAID_CACHE
 from .utils import round_coords, load_pickle, get_device_info, get_start_coords, Units, randomize_point, calc_pokemon_level
 from .shared import get_logger, LOOP, SessionManager, run_threaded, ACCOUNTS
 from . import altitudes, avatar, bounds, db_proc, spawns, sanitized as conf
