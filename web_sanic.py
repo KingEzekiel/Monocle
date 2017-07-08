@@ -190,16 +190,8 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE, trash
         'lon': pokemon['lon'],
         'expires_at': pokemon['expire_timestamp'],
     }
-    move1 = pokemon['move_1']
-    if move1:
-        move2 = pokemon['move_2']
-        marker['atk'] = pokemon['atk_iv']
-        marker['def'] = pokemon['def_iv']
-        marker['sta'] = pokemon['sta_iv']
-        marker['move1'] = moves[move1]
-        marker['move2'] = moves[move2]
-        marker['damage1'] = damage[move1]
-        marker['damage2'] = damage[move2]
+    if pokemon['form']:
+        marker['form'] = chr(pokemon['form']+64)
     return marker
 
 def raid_to_marker(raid, names=POKEMON, moves=MOVES):
