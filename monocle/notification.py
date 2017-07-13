@@ -753,6 +753,34 @@ class Notifier:
         else:
             return self.cleanup(encounter_id, cache_handle)
 
+    # Notify about a raid through webhook - TODO refactor notify to support raid + pokemon in one
+    async def notifyRaid(self, raid_info, gym):
+        if WEBHOOK:
+            whpushed = await self.webhookRaid(raid_info, gym)
+
+        # FIXME figure out wtf notify() does if whpushed goes wrong
+        return True
+
+    async def webhookRaid(self, raid, fort):
+        data = {
+            'type': "raid",
+            'message': {
+                "raid_seed": raid['raid_seed'],
+                "pokemon_id": raid.get('pokemon_id', 0),
+                "cp": raid.get('cp', 0),
+                "move_1": raid.get('move_1', 0),
+                "move_2": raid.get('move_2', 0),
+                "start": raid['raid_start'],
+                "end": raid['raid_end'],
+                "level": raid['raid_level'],
+                "latitude": fort['lat'],
+                "longitude": fort['lon']
+            }
+        }
+
+        session = SessionManager.get()
+        return await self.wh_send(session, data)
+    
     async def webhook(self, pokemon):
         """ Send a notification via webhook
         """
