@@ -193,6 +193,7 @@ class FortCache:
 
 class RaidCache:
     """Simple cache for storing raid info"""
+    """Self-delete after raid ends"""
     def __init__(self):
         self.raids = {}
         self.class_version = 2
@@ -203,12 +204,19 @@ class RaidCache:
 
     def add(self, raid):
         self.raids[raid['external_id']] = str(raid['raid_seed']) + str(raid.get('pokemon_id', 0))
+        call_at(raid['raid_end'], self.remove, raid['external_id'])
 
     def __contains__(self, raid):
         try:
             return self.raids[raid['external_id']] == str(raid['raid_seed']) + str(raid.get('pokemon_id', 0))
         except KeyError:
             return False
+
+    def remove(self, external_id):
+        try:
+            del self.raids[external_id]
+        except KeyError:
+            pass
 
     def pickle(self):
         state = self.__dict__.copy()
@@ -550,33 +558,37 @@ def add_raid_info(session, raw_raid):
     raid = session.query(RaidInfo) \
         .filter(RaidInfo.raid_seed == raw_raid['raid_seed']) \
         .first()
-
-    # Get fort id
-    fort = session.query(Fort) \
-        .filter(Fort.external_id == raw_raid['external_id']) \
-        .first()
-    if raid is None:
-        raid = RaidInfo(
-            fort_id=fort.id,
-            raid_seed=raw_raid['raid_seed'],
-            raid_level=raw_raid['raid_level'],
-            raid_spawn=raw_raid['raid_spawn'],
-            raid_start=raw_raid['raid_start'],
-            raid_end=raw_raid['raid_end'],
-            pokemon_id=raw_raid.get('pokemon_id'),
-            cp=raw_raid.get('cp'),
-            move_1=raw_raid.get('move_1'),
-            move_2=raw_raid.get('move_2')
-        )
-        RAID_CACHE.add(raw_raid)
-        session.add(raid)
-    else:
+    if raid:
         if raid.pokemon_id is None and raw_raid.get('pokemon_id') is not None:
             raid.pokemon_id = raw_raid['pokemon_id']
             raid.cp = raw_raid['cp']
             raid.move_1 = raw_raid['move_1']
             raid.move_2 = raw_raid['move_2']
             RAID_CACHE.add(raw_raid)
+            return
+        else:
+            # This raid is not in cache?
+            RAID_CACHE.add(raw_raid)
+            return
+        
+    # Get fort id
+    fort = session.query(Fort) \
+        .filter(Fort.external_id == raw_raid['external_id']) \
+        .first()
+    raid = RaidInfo(
+        fort_id=fort.id,
+        raid_seed=raw_raid['raid_seed'],
+        raid_level=raw_raid['raid_level'],
+        raid_spawn=raw_raid['raid_spawn'],
+        raid_start=raw_raid['raid_start'],
+        raid_end=raw_raid['raid_end'],
+        pokemon_id=raw_raid.get('pokemon_id'),
+        cp=raw_raid.get('cp'),
+        move_1=raw_raid.get('move_1'),
+        move_2=raw_raid.get('move_2')
+    )
+    RAID_CACHE.add(raw_raid)
+    session.add(raid)
 
 def add_pokestop(session, raw_pokestop):
     pokestop_id = raw_pokestop['external_id']

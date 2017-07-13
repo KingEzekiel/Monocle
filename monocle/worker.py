@@ -834,16 +834,13 @@ class Worker:
                     if fort not in FORT_CACHE:
                         db_proc.add(self.normalize_gym(fort))
                     if fort.HasField('raid_info'):
-                        raid_info = fort.raid_info
                         normalized_raid = self.normalize_raid(fort)
-                        if raid_info.HasField('raid_pokemon'):
-                            normalized_raid['pokemon_id'] = raid_info.raid_pokemon.pokemon_id
-                            normalized_raid['cp'] = raid_info.raid_pokemon.cp
-                            normalized_raid['move_1'] = raid_info.raid_pokemon.move_1
-                            normalized_raid['move_2'] = raid_info.raid_pokemon.move_2
                         if normalized_raid not in RAID_CACHE:
                             db_proc.add(normalized_raid)
 
+                            # notify about raid only when we got a mon
+                            if notify_conf:
+                                LOOP.create_task(self.notifier.notifyRaid(normalized_raid,self.normalize_gym(fort)))
 
             if more_points:
                 try:
@@ -1282,16 +1279,23 @@ class Worker:
 
     @staticmethod
     def normalize_raid(raw):
-        raid = raw.raid_info
-        return {
+        raid_info = raw.raid_info
+        normalized_raid = {
             'type': 'raidinfo',
             'external_id': raw.id,
-            'raid_seed': raid.raid_seed,
-            'raid_level': raid.raid_level,
-            'raid_spawn': raid.raid_spawn_ms // 1000,
-            'raid_start': raid.raid_battle_ms // 1000,
-            'raid_end': raid.raid_end_ms // 1000
+            'raid_seed': raid_info.raid_seed,
+            'raid_level': raid_info.raid_level,
+            'raid_spawn': raid_info.raid_spawn_ms // 1000,
+            'raid_start': raid_info.raid_battle_ms // 1000,
+            'raid_end': raid_info.raid_end_ms // 1000
         }
+        if raid_info.HasField('raid_pokemon'):
+            normalized_raid['pokemon_id'] = raid_info.raid_pokemon.pokemon_id
+            normalized_raid['cp'] = raid_info.raid_pokemon.cp
+            normalized_raid['move_1'] = raid_info.raid_pokemon.move_1
+            normalized_raid['move_2'] = raid_info.raid_pokemon.move_2
+
+        return normalized_raid
 
     @staticmethod
     def normalize_pokestop(raw):
