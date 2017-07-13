@@ -837,13 +837,7 @@ class Worker:
                     if fort not in FORT_CACHE:
                         db_proc.add(self.normalize_gym(fort))
                     if fort.HasField('raid_info'):
-                        raid_info = fort.raid_info
                         normalized_raid = self.normalize_raid(fort)
-                        if raid_info.HasField('raid_pokemon'):
-                            normalized_raid['pokemon_id'] = raid_info.raid_pokemon.pokemon_id
-                            normalized_raid['cp'] = raid_info.raid_pokemon.cp
-                            normalized_raid['move_1'] = raid_info.raid_pokemon.move_1
-                            normalized_raid['move_2'] = raid_info.raid_pokemon.move_2
                         if normalized_raid not in RAID_CACHE:
                             db_proc.add(normalized_raid)
 
