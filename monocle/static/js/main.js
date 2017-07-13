@@ -1,6 +1,6 @@
 //intial declarations
 var _last_pokemon_id = 0;
-var _pokemon_count = 248;
+var _pokemon_count = 251;
 var _WorkerIconUrl = 'https://raw.githubusercontent.com/Avatar690/monocle-icons/master/assets/ball.png';
 var _NotificationIconUrl = 'https://raw.githubusercontent.com/Avatar690/monocle-icons/master/assets/ultra.png';
 var _PokestopIconUrl = 'https://raw.githubusercontent.com/Avatar690/monocle-icons/master/assets/stop.png';
@@ -39,9 +39,15 @@ var PokemonIcon = L.Icon.extend({
 
 var FortIcon = L.Icon.extend({
     options: {
-        iconSize: [20, 20],
-        popupAnchor: [0, -10],
-        className: 'fort-icon'
+        popupAnchor: [0, -15]
+    },
+    createIcon: function() {
+        var div = document.createElement('div');
+        div.innerHTML =
+            '<div class="gymmarker fort-icon" id="' + this.options.id + '">' +
+            '<img src="' + this.options.iconUrl + '" />' +
+            '</div>';
+        return div;
     }
 });
 
@@ -102,7 +108,7 @@ function getPopupContent (item) {
     var minutes = parseInt(diff / 60);
     var seconds = parseInt(diff - (minutes * 60));
     var expires_at = minutes + 'm ' + seconds + 's';
-    var content = '<b>' + item.name + '</b> - <a href="https://pokemongo.gamepress.gg/pokemon/' + item.pokemon_id + '">#' + item.pokemon_id + '</a>';
+    var content = '<b>' + getPokeName(item.pokemon_id) + '</b> - <a href="https://pokemongo.gamepress.gg/pokemon/' + item.pokemon_id + '">#' + item.pokemon_id + '</a>';
 
     //check to see if values are undefined for stats.  If so, just drop basic info
     if (item.pokemon_id == 201){
@@ -210,7 +216,7 @@ function PokemonMarker (raw) {
         event.target.popupInterval = setInterval(function () {
             event.popup.setContent(getPopupContent(event.target.raw));
 			event.popup.options.autoPan = false; // Don't fight user panning
-        }, 1000);
+        }, 5000);
     });
     marker.on('popupclose', function (event) {
         clearInterval(event.target.popupInterval);
@@ -235,19 +241,26 @@ function PokemonMarker (raw) {
 }
 
 function FortMarker (raw) {
-    var icon = new FortIcon({iconUrl: 'https://raw.githubusercontent.com/Avatar690/monocle-icons/master/forts/' + raw.team + '.png'});
+    var icon = new FortIcon({iconUrl: '/static/monocle-icons/forts/' + raw.team + '.png', id: raw.id});
     var marker = L.marker([raw.lat, raw.lon], {icon: icon, opacity: 1});
     marker.raw = raw;
     markers[raw.id] = marker;
-    marker.on('popupopen',function popupopen (event) {
-        var pokemonName;
-        if (raw.team === 0) {
-            event.popup.setContent('An empty Gym!');
-        } else {
-            event.popup.setContent('Prestige: <b>' + raw.prestige + '</b><br>Guarding Pokemon:<br><b>' + '#' + raw.pokemon_id + ' ' + raw.pokemon_name + '</b>');
-        }
-    });
-    marker.bindPopup();
+    var content = ''
+    if (raw.team === 0) {
+        content = '<b>An empty Gym!</b>'
+    } else if (raw.team === 1) {
+        content = '<b>Team Mystic</b>'
+    } else if (raw.team === 2) {
+        content = '<b>Team Valor</b>'
+    } else if (raw.team === 3) {
+        content = '<b>Team Instinct</b>'
+    }
+    content += '<br>Slots available: ' + (raw.slots_available || 0) +
+        '<br>In battle: ' + (raw.in_battle || false)
+        '<br>Guarding Pokemon: ' + getPokeName(raw.pokemon_id) + ' (#' + raw.pokemon_id + ')';
+    content += '<br>=&gt; <a href=https://www.google.com/maps/?daddr='+ raw.lat + ','+ raw.lon +' target="_blank" title="See in Google Maps">Get directions</a>';
+    marker.default = content;
+    marker.bindPopup(content);
     return marker;
 }
 
@@ -279,7 +292,7 @@ function addPokemonToMap (data, map) {
     });
     updateTime();
     if (_updateTimeInterval === null){
-        _updateTimeInterval = setInterval(updateTime, 1000);
+        _updateTimeInterval = setInterval(updateTime, 5000);
     }
 }
 
@@ -296,6 +309,63 @@ function addGymsToMap (data, map) {
         }
         marker = FortMarker(item);
         marker.addTo(overlays.Gyms);
+    });
+}
+
+function addRaidsToMap(data) {
+    let currentTime = new Date().getTime() / 1000;
+    data.forEach(function (item) {
+        let html = '';
+        let marker = markers['fort-' + item.fort_id];
+	let popup = marker.getPopup();
+        let date = null;
+        if (marker.raw.team === 0) {
+            html += '<b>An empty Gym!</b>';
+        }else if (marker.raw.team === 1 ) {
+            html += '<b>Team Mystic</b>';
+            $('#fort-' + item.fort_id).css('background', '#2196f3');
+        }else if (marker.raw.team === 2 ) {
+            html += '<b>Team Valor</b>';
+            $('#fort-' + item.fort_id).css('background', '#d32f2f');
+        }else if (marker.raw.team === 3 ) {
+            html += '<b>Team Instinct</b>';
+            $('#fort-' + item.fort_id).css('background', '#ffeb3b');
+        }
+        if (item.raid_start > currentTime) {
+            date = new Date(item.raid_start*1000);
+            $('#fort-' + item.fort_id + ' > img').attr('src', '/static/img/egg-'+item.raid_level+'.png');
+            html += `<br>Slots available: ${(marker.raw.slots_available || 0)}
+                <br>In battle: ${(marker.raw.in_battle || false)}
+                <br>Guarding Pokemon: ${getPokeName(marker.raw.pokemon_id)} (#${marker.raw.pokemon_id})
+                <br>Raid level: ${item.raid_level}
+                <br>Raid starts in: <span class="raid-timer" data-timer="${item.raid_start}">${calculateRemainingTime(item.raid_start)}</span> (${date.toLocaleTimeString()})
+                <br>=&gt; <a href="https://www.google.com/maps/?daddr=${marker.raw.lat},${marker.raw.lon}" target="_blank" title="See in Google Maps">Get directions</a>`;
+            popup.setContent(html);
+            popup.update();
+
+        } else if (item.raid_start < currentTime && item.raid_end > currentTime) {
+            date = new Date(item.raid_end*1000);
+            if (!item.pokemon_id) {
+                html += `<br><b>NO DATA ABOUT RAIDS AVAILABLE</b><br>
+                    <b>Raid level:</b> ${item.raid_level}<br>
+                    <b>Raid ends in:</b> <span class="raid-timer" data-timer="${item.raid_end}">${calculateRemainingTime(item.raid_end)}</span> (${date.toLocaleTimeString()})<br>`;
+            } else {
+                $('#fort-' + item.fort_id + ' > img').attr('src', '/static/monocle-icons/icons/' + item.pokemon_id + '.png')
+                html += `<br><b>${getPokeName(item.pokemon_id)}</b> - <a href="https://pokemongo.gamepress.gg/pokemon/'${item.pokemon_id}">#${item.pokemon_id}</a><br>
+                        <b>Moveset:</b> ${item.move_1} / ${item.move_2} <br>
+                        <b>CP:</b> ${item.cp} <br>
+                        <b>Raid level:</b> ${item.raid_level}<br>
+                        <b>Raid ends in:</b> <span class="raid-timer" data-timer="${item.raid_end}">${calculateRemainingTime(item.raid_end)}</span> (${date.toLocaleTimeString()})<br>
+                        <br>=&gt; <a href="https://www.google.com/maps/?daddr=${marker.raw.lat},${marker.raw.lon}" target="_blank" title="See in Google Maps">Get directions</a`;
+            }
+            popup.setContent(html);
+            popup.update();
+        }else {
+            $('#fort-' + item.fort_id).css('background', '#fff');
+            $('#fort-' + item.fort_id + ' > img').attr('src', '/static/monocle-icons/forts/' + marker.raw.team + '.png');
+            popup.setContent(marker.default);
+            popup.update();
+        }
     });
 }
 
@@ -363,12 +433,21 @@ function getGyms () {
     if (overlays.Gyms.hidden) {
         return;
     }
-    new Promise(function (resolve, reject) {
+    let promises = [];
+
+    promises.push(new Promise(function (resolve, reject) {
         $.get('/gym_data', function (response) {
             resolve(response);
         });
-    }).then(function (data) {
-        addGymsToMap(data, map);
+    }));
+    promises.push(new Promise(function (resolve, reject) {
+        $.get('/raid_data', function (response) {
+            resolve(response);
+        });
+    }));
+    Promise.all(promises).then(function (data) {
+        addGymsToMap(data[0], map);
+        addRaidsToMap(data[1]);
     });
 }
 
@@ -484,7 +563,7 @@ map.whenReady(function () {
 		overlays.Gyms.hidden = false;
 		map.addLayer(overlays.Gyms);
 		getGyms();
-		setInterval(getGyms, 600000);
+		setInterval(getGyms, 120000);
 		togglegym = 1;
 		} else {
 			overlays.Gyms.hidden = true;
@@ -492,7 +571,7 @@ map.whenReady(function () {
 			togglegym = 0;
 			}
 	});
-
+/*
     $('.toggle-raid').on('click', function(){
 	if (toggleraid == 0) {
 		toggleraid = 1;
@@ -501,7 +580,7 @@ map.whenReady(function () {
 			}
 	});	
 	
-    /*overlays.Spawns.once('add', function(e) {
+    overlays.Spawns.once('add', function(e) {
     //    getSpawnPoints();
     //})
     //overlays.Pokestops.once('add', function(e) {
@@ -536,7 +615,7 @@ map.whenReady(function () {
         
         currentLocationMarker = L.marker([lat, lng]).addTo(map);
         getPokemon();
-		getScanAreaCoords();
+        getScanAreaCoords();
         pokemonInterval = setInterval(getPokemon, 30500);
 /*        
         currentLocationCircle = L.circle([lat, lng], {
@@ -789,10 +868,13 @@ $('.scroll-up').click(function () {
 });
 
 function calculateRemainingTime(expire_at_timestamp) {
-  var diff = (expire_at_timestamp - new Date().getTime() / 1000);
-        var minutes = parseInt(diff / 60);
-        var seconds = parseInt(diff - (minutes * 60));
-        return minutes + ':' + (seconds > 9 ? "" + seconds: "0" + seconds);
+    var diff = (expire_at_timestamp - new Date().getTime() / 1000);
+    if (diff < 0) {
+        return '00:00:00';
+    }
+    var minutes = parseInt(diff / 60);
+    var seconds = parseInt(diff - (minutes * 60));
+    return minutes + ':' + (seconds > 9 ? "" + seconds: "0" + seconds);
 }
 
 function updateTime() {
@@ -807,6 +889,10 @@ function updateTime() {
             $(this).css('visibility', 'hidden');
         });
     }
+    $('.raid-timer').each(function (){
+        let time = $(this).data('timer');
+        $(this).text(calculateRemainingTime(time));
+    });
 }
 
 function time(s) {
@@ -823,7 +909,7 @@ var audio = new Audio('/static/ding.mp3');
 function spawnNotification(raw) {
    if (!isMobile) {
    var theIcon = 'https://raw.githubusercontent.com/Avatar690/monocle-icons/master/icons/' + raw.pokemon_id + '.png';
-   var theTitle = raw.name + ' has spawned!';
+   var theTitle = getPokeName(raw.pokemon_id) + ' has spawned!';
    if (raw.atk != undefined) { 
 	var theBody = raw.atk+'/'+raw.def+'/'+raw.sta +' and Expires at ' + time(raw.expires_at);
 	} else {
@@ -945,7 +1031,7 @@ function ShowLists() {
 
     nearbyInterval = setInterval(function() {
         populateNearbyList();
-    }, 1000);
+    }, 5000);
 }
 
 function populateNearbyList(){
@@ -992,7 +1078,7 @@ function populateNearbyList(){
                 var partHtml = `<div class="text-center nearby" data-value="` + m.raw.id + `">
                         <img style="float:left" data-value="` + m.raw.id + `" src="https://pkmref.com/images/set_1/` + pokemon_id + `.png">
                         <div class="text-center" data-value="` + m.raw.id + `">
-                        <b>` + m.raw.name + `</b><br/>
+                        <b>` + getPokeName(m.raw.pokemon_id) + `</b><br/>
                         <b>Distance:</b> ` + distance + ` miles<br/>
                         Disappears in: ` + expires_at + `<br/>
                         </div>
@@ -1062,6 +1148,13 @@ function CalcDistanceKm(lat1, lon1, lat2, lon2) {
 
   return 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
 }
+
+function getPokeName(dnum) {
+    //calling getPokeName(25); returns 'Pikachu'
+    dex=['Pokemon','Bulbasaur','Ivysaur','Venusaur','Charmander','Charmeleon','Charizard','Squirtle','Wartortle','Blastoise','Caterpie','Metapod','Butterfree','Weedle','Kakuna','Beedrill','Pidgey','Pidgeotto','Pidgeot','Rattata','Raticate','Spearow','Fearow','Ekans','Arbok','Pikachu','Raichu','Sandshrew','Sandslash','Nidoran?','Nidorina','Nidoqueen','Nidoran?','Nidorino','Nidoking','Clefairy','Clefable','Vulpix','Ninetales','Jigglypuff','Wigglytuff','Zubat','Golbat','Oddish','Gloom','Vileplume','Paras','Parasect','Venonat','Venomoth','Diglett','Dugtrio','Meowth','Persian','Psyduck','Golduck','Mankey','Primeape','Growlithe','Arcanine','Poliwag','Poliwhirl','Poliwrath','Abra','Kadabra','Alakazam','Machop','Machoke','Machamp','Bellsprout','Weepinbell','Victreebel','Tentacool','Tentacruel','Geodude','Graveler','Golem','Ponyta','Rapidash','Slowpoke','Slowbro','Magnemite','Magneton','Farfetch&lsquo;d','Doduo','Dodrio','Seel','Dewgong','Grimer','Muk','Shellder','Cloyster','Gastly','Haunter','Gengar','Onix','Drowzee','Hypno','Krabby','Kingler','Voltorb','Electrode','Exeggcute','Exeggutor','Cubone','Marowak','Hitmonlee','Hitmonchan','Lickitung','Koffing','Weezing','Rhyhorn','Rhydon','Chansey','Tangela','Kangaskhan','Horsea','Seadra','Goldeen','Seaking','Staryu','Starmie','Mr. Mime','Scyther','Jynx','Electabuzz','Magmar','Pinsir','Tauros','Magikarp','Gyarados','Lapras','Ditto','Eevee','Vaporeon','Jolteon','Flareon','Porygon','Omanyte','Omastar','Kabuto','Kabutops','Aerodactyl','Snorlax','Articuno','Zapdos','Moltres','Dratini','Dragonair','Dragonite','Mewtwo','Mew','Chikorita','Bayleef','Meganium','Cyndaquil','Quilava','Typhlosion','Totodile','Croconaw','Feraligatr','Sentret','Furret','Hoothoot','Noctowl','Ledyba','Ledian','Spinarak','Ariados','Crobat','Chinchou','Lanturn','Pichu','Cleffa','Igglybuff','Togepi','Togetic','Natu','Xatu','Mareep','Flaaffy','Ampharos','Bellossom','Marill','Azumarill','Sudowoodo','Politoed','Hoppip','Skiploom','Jumpluff','Aipom','Sunkern','Sunflora','Yanma','Wooper','Quagsire','Espeon','Umbreon','Murkrow','Slowking','Misdreavus','Unown','Wobbuffet','Girafarig','Pineco','Forretress','Dunsparce','Gligar','Steelix','Snubbull','Granbull','Qwilfish','Scizor','Shuckle','Heracross','Sneasel','Teddiursa','Ursaring','Slugma','Magcargo','Swinub','Piloswine','Corsola','Remoraid','Octillery','Delibird','Mantine','Skarmory','Houndour','Houndoom','Kingdra','Phanpy','Donphan','Porygon2','Stantler','Smeargle','Tyrogue','Hitmontop','Smoochum','Elekid','Magby','Miltank','Blissey','Raikou','Entei','Suicune','Larvitar','Pupitar','Tyranitar','Lugia','Ho-Oh']
+    return dex[dnum];
+}
+
 //Populate settings and defaults
 populateSettingsPanels();
 setSettingsDefaults();

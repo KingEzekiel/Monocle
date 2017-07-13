@@ -92,10 +92,10 @@
 .toggle-gym {
     background-image: url('../img/gyms.png'); 
 }
-
+/*
 .toggle-raid {
 	background-image: url('../img/raid_egg.png');
-}
+}*/
 /*end icons*/
 #settings{
     position: absolute;
@@ -200,13 +200,13 @@
     text-align: center;
     margin: 0;
     padding: 0;
-    width: 36px;
+    width: 27px;
 }
 
 .gymmarker > img {
     position: relative;
-    width: 36px;
-    height: 36px;
+    width: 27px;
+    height: 27px;
 }
 /* end raids and gyms */
 #settings>.page-header{

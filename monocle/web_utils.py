@@ -4,7 +4,7 @@ from multiprocessing.managers import BaseManager, RemoteError
 from time import time
 
 from monocle import sanitized as conf
-from monocle.db import get_forts, Pokestop, session_scope, Sighting, Spawnpoint
+from monocle.db import get_forts, get_raids_info, Pokestop, session_scope, Sighting, Spawnpoint
 from monocle.utils import Units, get_address
 from monocle.names import DAMAGE, MOVES, POKEMON
 
@@ -128,14 +128,37 @@ def get_gym_markers(names=POKEMON):
     return [{
             'id': 'fort-' + str(fort['fort_id']),
             'sighting_id': fort['id'],
-            'prestige': fort['prestige'],
             'pokemon_id': fort['guard_pokemon_id'],
             'pokemon_name': names[fort['guard_pokemon_id']],
             'team': fort['team'],
+            'in_battle': fort['in_battle'],
+            'slots_available': fort['slots_available'],
+            'time_ocuppied': fort['time_ocuppied'],
             'lat': fort['lat'],
             'lon': fort['lon']
     } for fort in forts]
 
+def raid_to_marker(raid, names=POKEMON, moves=MOVES):
+    marker = {
+        'fort_id': raid['id'],
+        'raid_start': raid['raid_start'],
+        'raid_end': raid['raid_end'],
+        'raid_level': raid['raid_level']
+    } 
+    pokemon_id = raid['pokemon_id']
+    if pokemon_id:
+        marker['pokemon_id'] = raid['pokemon_id']
+        marker['pokemon_name'] = names[raid['pokemon_id']]
+        marker['cp'] = raid['cp']
+        marker['move_1'] = moves[raid['move_1']]
+        marker['move_2'] = moves[raid['move_2']]
+    return marker
+
+def get_raids_markers(names=POKEMON, moves=MOVES):
+    with session_scope() as session:
+        raids = get_raids_info(session)
+    return tuple(map(raid_to_marker, raids))
+    
 
 def get_spawnpoint_markers():
     with session_scope() as session:
