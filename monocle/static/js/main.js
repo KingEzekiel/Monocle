@@ -38,6 +38,9 @@ var PokemonIcon = L.Icon.extend({
 });
 
 var FortIcon = L.Icon.extend({
+    options: {
+        popupAnchor: [0, -15]
+    },
     createIcon: function() {
         var div = document.createElement('div');
         div.innerHTML =
