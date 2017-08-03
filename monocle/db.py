@@ -575,6 +575,9 @@ def add_raid_info(session, raw_raid):
     fort = session.query(Fort) \
         .filter(Fort.external_id == raw_raid['external_id']) \
         .first()
+    # Fort not found in db? Ignore raid.
+    if fort is None:
+        return
     raid = RaidInfo(
         fort_id=fort.id,
         raid_seed=raw_raid['raid_seed'],
