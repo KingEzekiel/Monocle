@@ -784,7 +784,7 @@ function populateSettingsPanels(){
     var newHtmlnotif = '';
     for (var i = 1; i <= _pokemon_count; i++){
             if ($.inArray(i, _defaultSettings['MAP_FILTER_IDS']) == -1) {
-            var partHtml = `<div class="text-center">
+            var partHtmlnotif = `<div class="text-center">
                 <div id="menu" class="sprite"><span class="sprite-`+i+`"></span></div>
                 <div class="btn-group" role="group" data-group="notif-`+i+`">
                   <button type="button" id="notifbutton" class="btn btn-default" data-id="`+i+`" data-value="rare">On</button>
