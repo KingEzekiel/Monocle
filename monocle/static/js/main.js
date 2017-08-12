@@ -764,7 +764,8 @@ function populateSettingsPanels(){
     var container = $('.settings-panel[data-panel="filters"]').children('.panel-body');
     var newHtml = '';
     for (var i = 1; i <= _pokemon_count; i++){
-        var partHtml = `<div class="text-center">
+            if ($.inArray(i, _defaultSettings['MAP_FILTER_IDS']) == -1) {
+            var partHtml = `<div class="text-center">
                 <div id="menu" class="sprite"><span class="sprite-`+i+`"></span></div>
                 <div class="btn-group" role="group" data-group="filter-`+i+`">
                   <button type="button" class="btn btn-default" data-id="`+i+`" data-value="pokemon">Show</button>
@@ -775,13 +776,15 @@ function populateSettingsPanels(){
 
         newHtml += partHtml
     }
+    }
     newHtml += '</div>';
     container.html(newHtml);
 
     var containernotif = $('.settings-panel[data-panel="notif"]').children('.panel-body');
     var newHtmlnotif = '';
     for (var i = 1; i <= _pokemon_count; i++){
-        var partHtmlnotif = `<div class="text-center">
+            if ($.inArray(i, _defaultSettings['MAP_FILTER_IDS']) == -1) {
+            var partHtml = `<div class="text-center">
                 <div id="menu" class="sprite"><span class="sprite-`+i+`"></span></div>
                 <div class="btn-group" role="group" data-group="notif-`+i+`">
                   <button type="button" id="notifbutton" class="btn btn-default" data-id="`+i+`" data-value="rare">On</button>
@@ -791,6 +794,7 @@ function populateSettingsPanels(){
         `;
 
         newHtmlnotif += partHtmlnotif
+    }
     }
     newHtmlnotif += '</div>';
     containernotif.html(newHtmlnotif);
