@@ -241,7 +241,7 @@ function PokemonMarker (raw) {
 }
 
 function FortMarker (raw) {
-    var icon = new FortIcon({iconUrl: '/static/monocle-icons/forts/' + raw.team + '.png', id: raw.id});
+    var icon = new FortIcon({iconUrl: 'https://safarisight.com/monocle-icons/forts/' + raw.team + '.png', id: raw.id});
     var marker = L.marker([raw.lat, raw.lon], {icon: icon, opacity: 1});
     marker.raw = raw;
     markers[raw.id] = marker;
@@ -350,7 +350,7 @@ function addRaidsToMap(data) {
                     <b>Raid level:</b> ${item.raid_level}<br>
                     <b>Raid ends in:</b> <span class="raid-timer" data-timer="${item.raid_end}">${calculateRemainingTime(item.raid_end)}</span> (${date.toLocaleTimeString()})<br>`;
             } else {
-                $('#fort-' + item.fort_id + ' > img').attr('src', '/static/monocle-icons/icons/' + item.pokemon_id + '.png')
+                $('#fort-' + item.fort_id + ' > img').attr('src', https://safarisight.com/monocle-icons/icons/' + item.pokemon_id + '.png')
                 html += `<br><b>${getPokeName(item.pokemon_id)}</b> - <a href="https://pokemongo.gamepress.gg/pokemon/'${item.pokemon_id}">#${item.pokemon_id}</a><br>
                         <b>Moveset:</b> ${item.move_1} / ${item.move_2} <br>
                         <b>CP:</b> ${item.cp} <br>
@@ -362,7 +362,7 @@ function addRaidsToMap(data) {
             popup.update();
         }else {
             $('#fort-' + item.fort_id).css('background', '#fff');
-            $('#fort-' + item.fort_id + ' > img').attr('src', '/static/monocle-icons/forts/' + marker.raw.team + '.png');
+            $('#fort-' + item.fort_id + ' > img').attr('src', 'https://safarisight.com/monocle-icons/forts/' + marker.raw.team + '.png');
             popup.setContent(marker.default);
             popup.update();
         }
@@ -912,7 +912,7 @@ if (!isMobile) {
 var audio = new Audio('/static/ding.mp3');
 function spawnNotification(raw) {
    if (!isMobile) {
-   var theIcon = 'https://raw.githubusercontent.com/Avatar690/monocle-icons/master/icons/' + raw.pokemon_id + '.png';
+   var theIcon = 'https://safarisight.com/monocle-icons/icons/' + raw.pokemon_id + '.png';
    var theTitle = getPokeName(raw.pokemon_id) + ' has spawned!';
    if (raw.atk != undefined) { 
 	var theBody = raw.atk+'/'+raw.def+'/'+raw.sta +' and Expires at ' + time(raw.expires_at);
