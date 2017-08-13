@@ -350,7 +350,7 @@ function addRaidsToMap(data) {
                     <b>Raid level:</b> ${item.raid_level}<br>
                     <b>Raid ends in:</b> <span class="raid-timer" data-timer="${item.raid_end}">${calculateRemainingTime(item.raid_end)}</span> (${date.toLocaleTimeString()})<br>`;
             } else {
-                $('#fort-' + item.fort_id + ' > img').attr('src', https://safarisight.com/monocle-icons/icons/' + item.pokemon_id + '.png')
+                $('#fort-' + item.fort_id + ' > img').attr('src', 'https://safarisight.com/monocle-icons/icons/' + item.pokemon_id + '.png')
                 html += `<br><b>${getPokeName(item.pokemon_id)}</b> - <a href="https://pokemongo.gamepress.gg/pokemon/'${item.pokemon_id}">#${item.pokemon_id}</a><br>
                         <b>Moveset:</b> ${item.move_1} / ${item.move_2} <br>
                         <b>CP:</b> ${item.cp} <br>
