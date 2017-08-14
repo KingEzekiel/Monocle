@@ -1080,7 +1080,7 @@ function populateNearbyList(){
             
             if ((minutes > 0) || (seconds > 0)) {
                 var partHtml = `<div class="text-center nearby" data-value="` + m.raw.id + `">
-                        <img style="float:left" data-value="` + m.raw.id + `" src="https://pkmref.com/images/set_1/` + pokemon_id + `.png">
+                        <img style="float:left" data-value="` + m.raw.id + `" src="https://safarisight.com/monocle-icons/icons/` + pokemon_id + `.png">
                         <div class="text-center" data-value="` + m.raw.id + `">
                         <b>` + getPokeName(m.raw.pokemon_id) + `</b><br/>
                         <b>Distance:</b> ` + distance + ` miles<br/>
