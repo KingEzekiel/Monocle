@@ -7,6 +7,8 @@ var _PokestopIconUrl = 'https://raw.githubusercontent.com/Avatar690/monocle-icon
 var _NotificationID = [0]; //This is the default list for notifications
 var togglegym = 0;
 var toggleraid = 0;
+var togglepoke = 0;
+
 
 //IV control lists, rare shows iv if it's %95+, ultralist shows ivs always, and hidden100 is the blacklist for always showing iv of 100% pokemons
 //var rarelist = [228, 231, 4, 176,179,133, 116, 95, 237, 158,159,157,156, 154, 155, 152,153, 79, 123, 216, 133, 149, 83, 59, 62, 65, 68, 76, 89, 103, 112, 130, 131, 137, 143, 144, 145, 146, 150, 151, 26, 31, 34, 45, 71, 94, 113, 115, 128, 139, 141, 142, 58, 129, 63, 102, 111, 125, 147, 148, 66, 154,157,160,181,186,199,208,212,214,229,230,232,233,241,242,246,247,248, 217];
@@ -571,16 +573,30 @@ map.whenReady(function () {
 			togglegym = 0;
 			}
 	});
-/*
+
+    $('.no-poke').on('click', function(){
+        if (togglepoke == 1) {
+                overlays.Pokemon.hidden = false;
+                map.addLayer(overlays.Pokemon);
+                getPokemon();
+                setInterval(getPokemon(), 30500);
+                togglepoke = 0;
+                } else {
+                        overlays.Pokemon.hidden = true;
+                        map.removeLayer(overlays.Pokemon);
+                        togglepoke = 1;
+                        }
+        });
+
     $('.toggle-raid').on('click', function(){
 	if (toggleraid == 0) {
 		toggleraid = 1;
 		} else {
 			toggleraid = 0;
 			}
-	});	
-	
-    overlays.Spawns.once('add', function(e) {
+	});
+
+/*    overlays.Spawns.once('add', function(e) {
     //    getSpawnPoints();
     //})
     //overlays.Pokestops.once('add', function(e) {
@@ -596,9 +612,9 @@ map.whenReady(function () {
     setInterval(getPokemon, 30500);
     //setInterval(getGyms, 600000);
     //setInterval(getWorkers, 14000);
-    
+
     currentLocationMarker = L.marker([map.getCenter().lat, map.getCenter().lng]).addTo(map);
-    
+
     map.on('locationfound', function(event){
         if (typeof currentLocationMarker !== 'undefined') {
             currentLocationMarker.remove();

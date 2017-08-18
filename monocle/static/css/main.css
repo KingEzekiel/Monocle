@@ -92,10 +92,14 @@
 .toggle-gym {
     background-image: url('../img/gyms.png'); 
 }
-/*
+
 .toggle-raid {
 	background-image: url('../img/raid_egg.png');
-}*/
+}
+
+.no-poke {
+        background-image: url('../img/nopoke.png');
+}
 /*end icons*/
 #settings{
     position: absolute;
