@@ -53,7 +53,7 @@
 .fort-icon {
     border-radius: 12px;
     padding: 2px;
-    background: #fff;
+    background: transparent;
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
 }
 /*icons*/
@@ -204,13 +204,13 @@
     text-align: center;
     margin: 0;
     padding: 0;
-    width: 50px;
+    width: 42px;
 }
 
 .gymmarker > img {
     position: relative;
-    width: 50px;
-    height: 50px;
+    width: 42px;
+    height: 42px;
 }
 /* end raids and gyms */
 #settings>.page-header{
