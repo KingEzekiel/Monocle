@@ -1,3 +1,12 @@
+<!--
+Edit History
+
+Date    User    Change
+------- ------- ------------------------------------------------------------------------------------------------------------------------
+25Aug17 wjr     Added title attr to buttons for hover help (works only on desktops)
+
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,12 +40,12 @@
     </script>
     
     <div id="main-map" class="map"></div>
-    <a class="map_btn my-location"></a>
-    <a class="map_btn my-settings"></a>
-    <a class="map_btn no-poke"></a>
-    <a class="map_btn toggle-gym"></a>
-    <a class="map_btn toggle-raid"></a>
-    <a class="map_btn my-lists"></a>
+    <a title="Location" class="map_btn my-location"></a>
+    <a title="Settings" class="map_btn my-settings"></a>
+    <a title="Don't display pokemon" class="map_btn no-poke"></a>
+    <a title="Toggle gym display" class="map_btn toggle-gym"></a>
+    <a title="Toggle raid display" class="map_btn toggle-raid"></a>
+    <a title="Display nearby pokemon" class="map_btn my-lists"></a>
 
     {{ social_links }}
     <div id="settings" class="container text-center">
@@ -46,7 +55,7 @@
         </div>
         <ul class="nav nav-pills nav-justified nav-settings">
             <li class="active"><a href="#" data-panel="filters">Filters</a></li>
-            <li><a href="#" data-panel="raids">Raids</a></li>
+            <li><a href="#" data-panel="raids">Raids+Gyms</a></li>
             <li><a href="#" data-panel="notif">Notifications</a></li>
             <li><a href="#" data-panel="more">Settings</a></li>
             <!-- New item example -->
@@ -57,7 +66,7 @@
             <div class="panel-body">Panel Content</div>
         </div>
         <div class="panel panel-default settings-panel" data-panel="raids">
-            <div class="panel-heading">Raid Settings</div>
+            <div class="panel-heading">Raids + Gym Settings</div>
             <div class="panel-body">Panel Content</div>
         </div>
         <div class="panel panel-default settings-panel" data-panel="more">
@@ -125,22 +134,6 @@
         </div>
         
     </div>
-	
-	<!--Modal Junk    
-    <script>
-    var modal = document.getElementById('myModal');
-    var btn = document.getElementById("myBtn");
-    var span = document.getElementsByClassName("close")[0];
-    span.onclick = function() {
-        modal.style.display = "none";
-    }
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
-    }
-    </script>
-    -->
     
     <script>{{ init_js_vars }}</script>
     <script> _defaultSettings['NOTIF_SOUND'] = '0'; </script>

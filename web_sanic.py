@@ -58,7 +58,8 @@ async def fullmap(request):
         "_defaultSettings['SHOW_TIMER'] = '{:d}'; "
         "_defaultSettings['RAIDS_FILTER'] = [{}];"
         "_defaultSettings['MAP_FILTER_IDS'] = [{}];"
-        "_defaultSettings['TRASH_IDS'] = [{}]; ".format(conf.FIXED_OPACITY, conf.SHOW_TIMER, ', '.join(str(p_id) for p_id in conf.RAIDS_FILTER), ', '.join(str(p_id) for p_id in conf.MAP_FILTER_IDS),  ', '.join(str(p_id) for p_id in conf.TRASH_IDS)))
+        "_defaultSettings['GYM_FILTER'] = [{}];"
+        "_defaultSettings['TRASH_IDS'] = [{}]; ".format(conf.FIXED_OPACITY, conf.SHOW_TIMER, ', '.join(str(p_id) for p_id in conf.RAIDS_FILTER), ', '.join(str(p_id) for p_id in conf.MAP_FILTER_IDS), ', '.join(str(p_id) for p_id in conf.GYM_FILTER), ', '.join(str(p_id) for p_id in conf.TRASH_IDS)))
 
     template = env.get_template('custom.html' if conf.LOAD_CUSTOM_HTML_FILE else 'newmap.html')
     return html(template.render(

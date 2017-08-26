@@ -1,4 +1,4 @@
-//intial declarations
+ //intial declarations
 var _last_pokemon_id = 0;
 var _pokemon_count = 251;
 var _WorkerIconUrl = 'https://raw.githubusercontent.com/Avatar690/monocle-icons/master/assets/ball.png';
@@ -7,9 +7,12 @@ var _PokestopIconUrl = 'https://raw.githubusercontent.com/Avatar690/monocle-icon
 var _NotificationID = [0]; //This is the default list for notifications
 var _raids_count = 5; //default list for raids
 var _raids_labels = ['', '', '', '', ''];
+var _gyms_count = 4;  //default lis for gyms
+var _gyms_labels = ['Empty&nbsp', ' Mystic&nbsp', 'Valor&nbsp&nbsp&nbsp', 'Instinct'];
 var togglegym = 0;
 var toggleraid = 0;
 var togglepoke = 0;
+
 
 //IV control lists, rare shows iv if it's %95+, ultralist shows ivs always, and hidden100 is the blacklist for always showing iv of 100% pokemons
 //var rarelist = [228, 231, 4, 176,179,133, 116, 95, 237, 158,159,157,156, 154, 155, 152,153, 79, 123, 216, 133, 149, 83, 59, 62, 65, 68, 76, 89, 103, 112, 130, 131, 137, 143, 144, 145, 146, 150, 151, 26, 31, 34, 45, 71, 94, 113, 115, 128, 139, 141, 142, 58, 129, 63, 102, 111, 125, 147, 148, 66, 154,157,160,181,186,199,208,212,214,229,230,232,233,241,242,246,247,248, 217];
@@ -48,7 +51,7 @@ var FortIcon = L.Icon.extend({
         var div = document.createElement('div');
         div.innerHTML =
             '<div class="gymmarker fort-icon" id="' + this.options.id + '">' +
-            '<img src="' + this.options.iconUrl + '" />' +
+            '<img alt="1234" src="' + this.options.iconUrl + '" />' +
             '</div>';
         return div;
     }
@@ -137,7 +140,7 @@ function getPopupContent (item) {
     }else{
         content += '<a href="#" data-pokeid="'+item.pokemon_id+'" data-newnotif="Rare" class="popup_notif_link">Notify</a>';
     }
-    content += ' | <a href=https://maps.google.com/maps?q='+ item.lat + ','+ item.lon +' title="Maps">Maps</p></a>';
+    content += ' | <a href=https://maps.google.com/maps?q='+ item.lat + ','+ item.lon +' title="Maps" target="_blank">Maps</p></a>';
     return content;
 }
 
@@ -244,7 +247,14 @@ function PokemonMarker (raw) {
 }
 
 function FortMarker (raw) {
-    var icon = new FortIcon({iconUrl: 'https://safarisight.com/monocle-icons/forts/' + raw.team + '.png', id: raw.id});
+
+    if (raw.in_battle == false)
+    {
+       in_battle = 0;
+    } else {
+       in_battle = 1;
+    }
+    var icon = new FortIcon({iconUrl: 'https://safarisight.com/monocle-icons/forts/' + raw.team + raw.slots_available + in_battle + '.png', id: raw.id, battle: raw.in_battle});
     var marker = L.marker([raw.lat, raw.lon], {icon: icon, opacity: 1});
     marker.raw = raw;
     markers[raw.id] = marker;
@@ -330,9 +340,11 @@ function parseGyms(gym_data, raid_data)
 
 }
 
-function addGymsToMap (data, map) {
+function addGymsToMap (data, map, toggle) {
 
-    data.forEach(function (item) {
+    if (toggle == 1) {
+      data.forEach(function (item) {
+
         if (item != undefined) {
         // No change since last time? Then don't do anything
 
@@ -345,9 +357,35 @@ function addGymsToMap (data, map) {
             markers[item.id] = undefined;
         }
         marker = FortMarker(item);
-        marker.addTo(overlays.Gyms); 
+        marker.addTo(overlays.Gyms);
         }
     });
+  } else {
+
+    emptyPref = getPreference('gyms-'+0);
+    mysticPref = getPreference('gyms-'+1);
+    valorPref = getPreference('gyms-'+2);
+    instinctPref = getPreference('gyms-'+3);
+
+      data.forEach(function (item) {
+
+        if ((item != undefined) && (((item.team == 1) && (mysticPref == 'show')) || ((item.team == 2) && (valorPref == 'show')) || ((item.team == 3) && (instinctPref == 'show')) || ((item.team == 0) && (emptyPref == 'show')))) {
+        // No change since last time? Then don't do anything
+
+        var existing = markers[item.id];
+        if (typeof existing !== 'undefined') {
+            if (existing.raw.sighting_id === item.sighting_id) {
+                existing.removeFrom(overlays.Gyms);
+            }
+            existing.removeFrom(overlays.Gyms);
+            markers[item.id] = undefined;
+        }
+        marker = FortMarker(item);
+        marker.addTo(overlays.Gyms);
+        }
+    });
+  }
+
 }
 
 function addRaidsToMap(data) {
@@ -401,7 +439,7 @@ function addRaidsToMap(data) {
             popup.update();
         }else {
             $('#fort-' + item.fort_id).css('background', '#fff');
-            $('#fort-' + item.fort_id + ' > img').attr('src', 'https://safarisight.com/monocle-icons/forts/' + marker.raw.team + '.png');
+            $('#fort-' + item.fort_id + ' > img').attr('src', 'https://safarisight.com/monocle-icons/forts/' + marker.raw.team + raw.slots_available + '.png');
             popup.setContent(marker.default);
             popup.update();
         }
@@ -473,7 +511,8 @@ function getGyms (toggle) {
     if (overlays.Gyms.hidden) {
         return;
     }
-    overlays.Gyms.clearLayers();
+
+    if (toggle != 2){ overlays.Gyms.clearLayers(); }
 
     let promises = [];
 
@@ -489,7 +528,11 @@ function getGyms (toggle) {
     }));
     Promise.all(promises).then(function (data) {
         if ((toggle == 1) && (toggleraid == 1)) { parseGyms(data[0], data[1]); }
-        addGymsToMap(data[0], map);
+        if ((toggle == 1) && (toggleraid == 1)) {
+           addGymsToMap(data[0], map, 1)
+        } else if (((toggle == 0) && (togglegym == 1)) || ((toggle == 1) && (togglegym == 1))) {
+           addGymsToMap(data[0], map, 0);
+        }
         if ((toggle == 1) && (toggleraid == 1)) { addRaidsToMap(data[1]); }
     });
 }
@@ -593,6 +636,7 @@ layer.addTo(map);
 
 //Uncomment lines here to re-add layers
 map.whenReady(function () {
+   overlays.Gyms.hidden = true;
     $('.my-location').on('click', function () {
         GetCurrentLocation();
     });
@@ -647,13 +691,13 @@ map.whenReady(function () {
         });
 
 /*    overlays.Spawns.once('add', function(e) {
-    //    getSpawnPoints();
-    //})
-    //overlays.Pokestops.once('add', function(e) {
-    //    getPokestops();
-    })*/
+        getSpawnPoints();
+    })
+    overlays.Pokestops.once('add', function(e) {
+        getPokestops();
+    })
 
-    //getWorkers();
+    getWorkers();*/
 
     overlays.Workers.hidden = true;
     getPokemon();
@@ -847,20 +891,34 @@ function populateSettingsPanels(){
     container.html(newHtml);
 
     containerraids = $('.settings-panel[data-panel="raids"]').children('.panel-body');
-    newHtmlraids = '';
+    newHtmlraids = '<tr>';
     for (var i = 1; i <= _raids_count; i++){
-        var partHtmlraids = `<div class="text-center">
-                <span class="raid-label">Level ` + i + `` + _raids_labels[i-1] + `` + `</span>
+        var partHtmlraids = `<td><div class="text-center">
+                <span class="raid-label"><img src="https://safarisight.com/monocle-icons/forts/raid` + i + `.png" height=40 width=40 align="left"></span>
                 <div class="btn-group" role="group" data-group="raids-`+i+`">
                   <button type="button" onclick="getGyms(1)" class="btn btn-default" data-id="`+i+`" data-value="show">Show</button>
-                  <button type="button" onclick="getGyms(1)" class="btn btn-default" data-id="`+i+`" data-value="hide">Hide</button>
+                  <button type="button" onclick="getGyms(1)" class="btn btn-default" data-id="`+i+`" data-value="hide">&nbspHide&nbsp</button>
                 </div>
-            </div>
+            </div></td>
         `;
 
         newHtmlraids += partHtmlraids
     }
-    newHtmlraids += '</div>';
+    newHtmlraids += '</div></tr><tr>';
+
+    for (var i = 0; i < _gyms_count; i++){
+        var partHtmlraids = `<td><div class="text-center">
+                <span class="gym-label"><img src="https://safarisight.com/monocle-icons/forts/` + i + `.png" align="left"></span>
+                <div class="btn-group" role="group" data-group="gyms-`+i+`">
+                  <button type="button" onclick="getGyms(0)" class="btn btn-default" data-id="`+i+`" data-value="show">Show</button>
+                  <button type="button" onclick="getGyms(0)" class="btn btn-default" data-id="`+i+`" data-value="hide">&nbspHide&nbsp</button>
+                </div>
+            </div></td>
+        `;
+
+         newHtmlraids += partHtmlraids
+    }
+    newHtmlraids += '</div></tr>';
     containerraids.html(newHtmlraids);
 
     var containernotif = $('.settings-panel[data-panel="notif"]').children('.panel-body');
@@ -899,6 +957,11 @@ function setSettingsDefaults(){
 	for (var i = 1; i <= _raids_count; i++){
         _defaultSettings['raids-'+i] = (_defaultSettings['RAIDS_FILTER'].indexOf(i) > -1) ? "show" : "hide";
     };
+
+        for (var i = 0; i <= _gyms_count; i++){
+        _defaultSettings['gyms-'+i] = (_defaultSettings['GYM_FILTER'].indexOf(i) > -1) ? "show" : "hide";
+    };
+
 
     $("#settings div.btn-group").each(function(){
         var item = $(this);
@@ -1233,8 +1296,8 @@ function PushSort(arr, item)
 function CalcDistanceKm(lat1, lon1, lat2, lon2) {
   var p = 0.017453292519943295;    // Math.PI / 180
   var c = Math.cos;
-  var a = 0.5 - c((lat2 - lat1) * p)/2 + 
-          c(lat1 * p) * c(lat2 * p) * 
+  var a = 0.5 - c((lat2 - lat1) * p)/2 +
+          c(lat1 * p) * c(lat2 * p) *
           (1 - c((lon2 - lon1) * p))/2;
 
   return 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
