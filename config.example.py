@@ -112,6 +112,9 @@ PGSCOUT_PORT ='1234'
 # and instability for Monocle
 #PGSCOUT_TIMEOUT = 36
 
+#Enter in your address for PGSCOUT hook.  Leave the ':' off for the port... it will be automatically added in
+#PGSCOUT_ADDRESS = 'http://1.2.3.4'
+
 # PokéStops
 SPIN_POKESTOPS = True  # spin all PokéStops that are within range
 SPIN_COOLDOWN = 300    # spin only one PokéStop every n seconds (default 300)

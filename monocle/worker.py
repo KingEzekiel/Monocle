@@ -895,7 +895,7 @@ class Worker:
     async def pgscout(self, session, pokemon, spawn_id):
         try:
             async with session.get(
-                    'http://127.0.0.1:' + conf.PGSCOUT_PORT + '/iv',
+                    conf.PGSCOUT_ADDRESS + ':' + conf.PGSCOUT_PORT + '/iv',
                     params={'pokemon_id': pokemon['pokemon_id'],
                             'encounter_id': pokemon['encounter_id'],
                             'spawn_point_id': spawn_id,
