@@ -427,9 +427,9 @@ def add_sighting(session, pokemon):
         move_1=pokemon.get('move_1'),
         move_2=pokemon.get('move_2'),
         cp=pokemon.get('cp'),
-        form=pokemon.get('form', 0),
+        form=pokemon.get('form', ),
         level=pokemon.get('level'),
-        gender=pokemon.get('gender', 0)
+        gender=pokemon.get('gender', )
 
     )
     session.add(obj)
@@ -531,9 +531,9 @@ def add_mystery(session, pokemon):
         move_1=pokemon.get('move_1'),
         move_2=pokemon.get('move_2'),
         cp=pokemon.get('cp'),
-        form=pokemon.get('form',0),
+        form=pokemon.get('form'),
         level=pokemon.get('level'),
-        gender=pokemon.get('gender',0)
+        gender=pokemon.get('gender')
     )
     session.add(obj)
     MYSTERY_CACHE.add(pokemon)

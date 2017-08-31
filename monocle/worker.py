@@ -1243,6 +1243,8 @@ class Worker:
             'lat': raw.latitude,
             'lon': raw.longitude,
             'spawn_id': int(raw.spawn_point_id, 16) if spawn_int else raw.spawn_point_id,
+            'gender': raw.pokemon_data.pokemon_display.gender,
+            'form': raw.pokemon_data.pokemon_display.form,
             'seen': tss
         }
         if tth > 0 and tth <= 90000:
