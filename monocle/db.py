@@ -423,8 +423,8 @@ def add_sighting(session, pokemon):
         sta_iv=pokemon.get('individual_stamina'),
         move_1=pokemon.get('move_1'),
         move_2=pokemon.get('move_2'),
-        gender=pokemon.get('gender', 0),
-        form=pokemon.get('form', 0)
+        gender=pokemon.get('gender'),
+        form=pokemon.get('form')
     )
     session.add(obj)
     SIGHTING_CACHE.add(pokemon)
