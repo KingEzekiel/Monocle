@@ -93,7 +93,7 @@ async def pokemon_data(request, _time=time):
     last_id = request.args.get('last_id', 0)
     async with app.pool.acquire() as conn:
         results = await conn.fetch('''
-            SELECT id, pokemon_id, expire_timestamp, lat, lon, form
+            SELECT id, pokemon_id, expire_timestamp, lat, lon, form, gender
             FROM sightings
             WHERE expire_timestamp > {} AND id > {}
         '''.format(_time(), last_id))
@@ -180,11 +180,11 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE, trash
     marker = {
         'id': 'pokemon-' + _str(pokemon['id']),
         'trash': pokemon_id in trash,
-        'name': names[pokemon_id],
         'pokemon_id': pokemon_id,
         'lat': pokemon['lat'],
         'lon': pokemon['lon'],
         'expires_at': pokemon['expire_timestamp'],
+        'gender': pokemon['gender'],
     }
     if pokemon['form']:
         marker['form'] = chr(pokemon['form']+64)

@@ -7,7 +7,7 @@ var _PokestopIconUrl = 'https://raw.githubusercontent.com/Avatar690/monocle-icon
 var _NotificationID = [0]; //This is the default list for notifications
 var _raids_count = 5; //default list for raids
 var _raids_labels = ['', '', '', '', ''];
-var _gyms_count = 4;  //default lis for gyms
+var _gyms_count = 4;  //default list for gyms
 var _gyms_labels = ['Empty&nbsp', ' Mystic&nbsp', 'Valor&nbsp&nbsp&nbsp', 'Instinct'];
 var togglegym = 0;
 var toggleraid = 0;
@@ -51,8 +51,22 @@ var FortIcon = L.Icon.extend({
         var div = document.createElement('div');
         div.innerHTML =
             '<div class="gymmarker fort-icon" id="' + this.options.id + '">' +
-            '<img alt="1234" src="' + this.options.iconUrl + '" />' +
+            '<img src="' + this.options.iconUrl + '" />' +
             '</div>';
+        return div;
+    }
+});
+
+var RaidIcon = L.Icon.extend({
+    options: {
+        popupAnchor: [0, -15]
+    },
+    createIcon: function() {
+        var div = document.createElement('div');
+        div.innerHTML = '<div class="gymmarker fort-icon" id="' + this.options.id + '">' +
+                        '<img src="' + this.options.iconUrl + '" />' +
+                        '<div class="remaining_raid" width=100% data-expire="' + this.options.raid_end + '">' + calculateRemainingTime(this.options.raid_end) + '</div>' +
+                        '</div>';
         return div;
     }
 });
@@ -114,7 +128,7 @@ function getPopupContent (item) {
     var minutes = parseInt(diff / 60);
     var seconds = parseInt(diff - (minutes * 60));
     var expires_at = minutes + 'm ' + seconds + 's';
-    var content = '<b>' + getPokeName(item.pokemon_id) + '</b> - <a href="https://pokemongo.gamepress.gg/pokemon/' + item.pokemon_id + '">#' + item.pokemon_id + '</a>';
+    var content = '<b>' + getPokeName(item.pokemon_id) + ' (' + toGender(item.gender) + ')' + '</b> - <a href="https://pokemongo.gamepress.gg/pokemon/' + item.pokemon_id + '">#' + item.pokemon_id + '</a>';
 
     //check to see if values are undefined for stats.  If so, just drop basic info
     if (item.pokemon_id == 201){
@@ -246,7 +260,7 @@ function PokemonMarker (raw) {
     return marker;
 }
 
-function FortMarker (raw) {
+function FortMarker (raw, toggle, raid) {
 
     if (raw.in_battle == false)
     {
@@ -254,7 +268,8 @@ function FortMarker (raw) {
     } else {
        in_battle = 1;
     }
-    var icon = new FortIcon({iconUrl: 'https://safarisight.com/monocle-icons/forts/' + raw.team + raw.slots_available + in_battle + '.png', id: raw.id, battle: raw.in_battle});
+    if (toggle == 0) { var icon = new FortIcon({iconUrl: 'https://safarisight.com/monocle-icons/forts/' + raw.team + raw.slots_available + in_battle + '.png', id: raw.id, battle: raw.in_battle}); }
+    if (toggle == 1) { var icon = new RaidIcon({iconUrl: 'https://safarisight.com/monocle-icons/forts/' + raw.team + raw.slots_available + in_battle + '.png', id: raw.id, battle: raw.in_battle, raid_end: raid}); }
     var marker = L.marker([raw.lat, raw.lon], {icon: icon, opacity: 1});
     marker.raw = raw;
     markers[raw.id] = marker;
@@ -340,14 +355,23 @@ function parseGyms(gym_data, raid_data)
 
 }
 
-function addGymsToMap (data, map, toggle) {
+function addGymsToMap (data, map, toggle, raid) {
 
-    if (toggle == 1) {
+   if (toggle == 1) {
+    let indices = [];
+    let temp_raid = []
+    let index = 0;
+    for (var i = 0; i <= Object.keys(raid).length; i++) {
+         if (raid[i] != undefined) {
+              temp_raid[index] = 'fort-' + raid[i]['fort_id'];
+              indices[index] = i;
+              index++;
+              }
+         }
+
       data.forEach(function (item) {
-
         if (item != undefined) {
         // No change since last time? Then don't do anything
-
         var existing = markers[item.id];
         if (typeof existing !== 'undefined') {
             if (existing.raw.sighting_id === item.sighting_id) {
@@ -356,9 +380,14 @@ function addGymsToMap (data, map, toggle) {
             existing.removeFrom(overlays.Gyms);
             markers[item.id] = undefined;
         }
-        marker = FortMarker(item);
-        marker.addTo(overlays.Gyms);
+
+        for (var i = 0; i < indices.length; i++) {
+            if (item.id == temp_raid[i]) {
+                 marker = FortMarker(item, 1, raid[(indices[i])]['raid_end']);
+                 marker.addTo(overlays.Gyms);
+           }
         }
+      }
     });
   } else {
 
@@ -380,7 +409,7 @@ function addGymsToMap (data, map, toggle) {
             existing.removeFrom(overlays.Gyms);
             markers[item.id] = undefined;
         }
-        marker = FortMarker(item);
+        marker = FortMarker(item, 0, 0);
         marker.addTo(overlays.Gyms);
         }
     });
@@ -428,6 +457,7 @@ function addRaidsToMap(data) {
                     <b>Raid ends in:</b> <span class="raid-timer" data-timer="${item.raid_end}">${calculateRemainingTime(item.raid_end)}</span> (${date.toLocaleTimeString()})<br>`;
             } else {
                 $('#fort-' + item.fort_id + ' > img').attr('src', 'https://safarisight.com/monocle-icons/icons/' + item.pokemon_id + '.png')
+		$('#fort-' + item.fort_id + ' > img').attr('data-expire', '1503924175')
                 html += `<br><b>${getPokeName(item.pokemon_id)}</b> - <a href="https://pokemongo.gamepress.gg/pokemon/'${item.pokemon_id}">#${item.pokemon_id}</a><br>
                         <b>Moveset:</b> ${item.move_1} / ${item.move_2} <br>
                         <b>CP:</b> ${item.cp} <br>
@@ -529,9 +559,9 @@ function getGyms (toggle) {
     Promise.all(promises).then(function (data) {
         if ((toggle == 1) && (toggleraid == 1)) { parseGyms(data[0], data[1]); }
         if ((toggle == 1) && (toggleraid == 1)) {
-           addGymsToMap(data[0], map, 1)
+           addGymsToMap(data[0], map, 1, data[1])
         } else if (((toggle == 0) && (togglegym == 1)) || ((toggle == 1) && (togglegym == 1))) {
-           addGymsToMap(data[0], map, 0);
+           addGymsToMap(data[0], map, 0, data[1]);
         }
         if ((toggle == 1) && (toggleraid == 1)) { addRaidsToMap(data[1]); }
     });
@@ -650,8 +680,8 @@ map.whenReady(function () {
 	if (togglegym == 0) {
 		overlays.Gyms.hidden = false;
 		map.addLayer(overlays.Gyms);
-		getGyms(0);
-		setInterval(getGyms(0), 120000);
+		//getGyms(0);
+		setInterval(getGyms(0), 1200);
 		togglegym = 1;
                 toggleraid = 0;
 		} else {
@@ -665,7 +695,7 @@ map.whenReady(function () {
         if (togglepoke == 1) {
                 overlays.Pokemon.hidden = false;
                 map.addLayer(overlays.Pokemon);
-                getPokemon();
+                //getPokemon();
                 setInterval(getPokemon(), 30500);
                 togglepoke = 0;
                 } else {
@@ -681,7 +711,7 @@ map.whenReady(function () {
                 map.addLayer(overlays.Gyms);
                 toggleraid = 1;
                 togglegym = 0;
-                getGyms(1);
+                //getGyms(1);
                 setInterval(getGyms(1), 120000);
                 } else {
                         overlays.Gyms.hidden = true;
@@ -704,7 +734,8 @@ map.whenReady(function () {
     //getGyms();
 
     setInterval(getPokemon, 30500);
-    //setInterval(getGyms, 600000);
+//    setInterval(getGyms(0), 120000);
+ //   setInterval(getGyms(1), 120000);
     //setInterval(getWorkers, 14000);
 
     currentLocationMarker = L.marker([map.getCenter().lat, map.getCenter().lng]).addTo(map);
@@ -1047,6 +1078,11 @@ function updateTime() {
         let time = $(this).data('timer');
         $(this).text(calculateRemainingTime(time));
     });
+
+    if (getPreference("SHOW_TIMER") === "1"){        $(".remaining_raid").each(function() {            $(this).css('visibility', 'visible');            $(this).css('height', '15px');            this.innerHTML = calculateRemainingTime($(this).data('expire'));        });    }else{        $(".remaining_raid").each(function() {            $(this).css('visibility', 'hidden');        });                                                                                                                                            } 
+
+
+
 }
 
 function time(s) {
@@ -1307,6 +1343,24 @@ function getPokeName(dnum) {
     //calling getPokeName(25); returns 'Pikachu'
     dex=['Pokemon','Bulbasaur','Ivysaur','Venusaur','Charmander','Charmeleon','Charizard','Squirtle','Wartortle','Blastoise','Caterpie','Metapod','Butterfree','Weedle','Kakuna','Beedrill','Pidgey','Pidgeotto','Pidgeot','Rattata','Raticate','Spearow','Fearow','Ekans','Arbok','Pikachu','Raichu','Sandshrew','Sandslash','Nidoran?','Nidorina','Nidoqueen','Nidoran?','Nidorino','Nidoking','Clefairy','Clefable','Vulpix','Ninetales','Jigglypuff','Wigglytuff','Zubat','Golbat','Oddish','Gloom','Vileplume','Paras','Parasect','Venonat','Venomoth','Diglett','Dugtrio','Meowth','Persian','Psyduck','Golduck','Mankey','Primeape','Growlithe','Arcanine','Poliwag','Poliwhirl','Poliwrath','Abra','Kadabra','Alakazam','Machop','Machoke','Machamp','Bellsprout','Weepinbell','Victreebel','Tentacool','Tentacruel','Geodude','Graveler','Golem','Ponyta','Rapidash','Slowpoke','Slowbro','Magnemite','Magneton','Farfetch&lsquo;d','Doduo','Dodrio','Seel','Dewgong','Grimer','Muk','Shellder','Cloyster','Gastly','Haunter','Gengar','Onix','Drowzee','Hypno','Krabby','Kingler','Voltorb','Electrode','Exeggcute','Exeggutor','Cubone','Marowak','Hitmonlee','Hitmonchan','Lickitung','Koffing','Weezing','Rhyhorn','Rhydon','Chansey','Tangela','Kangaskhan','Horsea','Seadra','Goldeen','Seaking','Staryu','Starmie','Mr. Mime','Scyther','Jynx','Electabuzz','Magmar','Pinsir','Tauros','Magikarp','Gyarados','Lapras','Ditto','Eevee','Vaporeon','Jolteon','Flareon','Porygon','Omanyte','Omastar','Kabuto','Kabutops','Aerodactyl','Snorlax','Articuno','Zapdos','Moltres','Dratini','Dragonair','Dragonite','Mewtwo','Mew','Chikorita','Bayleef','Meganium','Cyndaquil','Quilava','Typhlosion','Totodile','Croconaw','Feraligatr','Sentret','Furret','Hoothoot','Noctowl','Ledyba','Ledian','Spinarak','Ariados','Crobat','Chinchou','Lanturn','Pichu','Cleffa','Igglybuff','Togepi','Togetic','Natu','Xatu','Mareep','Flaaffy','Ampharos','Bellossom','Marill','Azumarill','Sudowoodo','Politoed','Hoppip','Skiploom','Jumpluff','Aipom','Sunkern','Sunflora','Yanma','Wooper','Quagsire','Espeon','Umbreon','Murkrow','Slowking','Misdreavus','Unown','Wobbuffet','Girafarig','Pineco','Forretress','Dunsparce','Gligar','Steelix','Snubbull','Granbull','Qwilfish','Scizor','Shuckle','Heracross','Sneasel','Teddiursa','Ursaring','Slugma','Magcargo','Swinub','Piloswine','Corsola','Remoraid','Octillery','Delibird','Mantine','Skarmory','Houndour','Houndoom','Kingdra','Phanpy','Donphan','Porygon2','Stantler','Smeargle','Tyrogue','Hitmontop','Smoochum','Elekid','Magby','Miltank','Blissey','Raikou','Entei','Suicune','Larvitar','Pupitar','Tyranitar','Lugia','Ho-Oh']
     return dex[dnum];
+}
+
+function toGender(num) {
+    switch(num) {
+         case 0:
+             gender = '?';
+             break;
+         case 1:
+             gender = 'M';
+             break;
+         case 2:
+             gender = 'F';
+             break;
+         case 3:
+             gender = 'N'
+             break
+    }
+    return gender;
 }
 
 //Populate settings and defaults
