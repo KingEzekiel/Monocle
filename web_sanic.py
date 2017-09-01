@@ -13,8 +13,6 @@ from monocle.bounds import center
 from monocle.names import DAMAGE, MOVES, POKEMON
 from monocle.web_utils import get_scan_coords, get_worker_markers, Workers, get_args
 
-
-env = Environment(loader=PackageLoader('monocle', 'templates'))
 app = Sanic(__name__)
 app.static('/static', resource_filename('monocle', 'static'))
 
@@ -33,33 +31,6 @@ def social_links():
 
     return Markup(social_links)
 
-
-def render_map():
-    css_js = ''
-
-    if conf.LOAD_CUSTOM_CSS_FILE:
-        css_js = '<link rel="stylesheet" href="static/css/custom.css">'
-    if conf.LOAD_CUSTOM_JS_FILE:
-        css_js += '<script type="text/javascript" src="static/js/custom.js"></script>'
-
-    js_vars = Markup(
-        "_defaultSettings['FIXED_OPACITY'] = '{:d}'; "
-        "_defaultSettings['SHOW_TIMER'] = '{:d}'; "
-        "_defaultSettings['MAP_FILTER_IDS'] = [{}];"
-        "_defaultSettings['TRASH_IDS'] = [{}]; ".format(conf.FIXED_OPACITY, conf.SHOW_TIMER, ', '.join(str(p_id) for p_id in conf.MAP_FILTER_IDS), ', '.join(str(p_id) for p_id in conf.TRASH_IDS)))
-
-    template = env.get_template('custom.html' if conf.LOAD_CUSTOM_HTML_FILE else 'newmap.html')
-    return html(template.render(
-        area_name=conf.AREA_NAME,
-        map_center=center,
-        map_provider_url=conf.MAP_PROVIDER_URL,
-        map_provider_attribution=conf.MAP_PROVIDER_ATTRIBUTION,
-        social_links=social_links(),
-        init_js_vars=js_vars,
-        extra_css_js=Markup(css_js)
-    ))
-
-
 def render_worker_map():
     template = env.get_template('workersmap.html')
     return html(template.render(
@@ -72,8 +43,35 @@ def render_worker_map():
 
 
 @app.get('/')
-async def fullmap(request, html_map=render_map()):
-    return html_map
+async def fullmap(request):
+    env = Environment(loader=PackageLoader('monocle', 'templates'))
+    username=request.args.get('username', 'Patron')
+    css_js = ''
+
+    if conf.LOAD_CUSTOM_CSS_FILE:
+        css_js = '<link rel="stylesheet" href="static/css/custom.css">'
+    if conf.LOAD_CUSTOM_JS_FILE:
+        css_js += '<script type="text/javascript" src="static/js/custom.js"></script>'
+
+    js_vars = Markup(
+        "_defaultSettings['FIXED_OPACITY'] = '{:d}'; "
+        "_defaultSettings['SHOW_TIMER'] = '{:d}'; "
+        "_defaultSettings['RAIDS_FILTER'] = [{}];"
+        "_defaultSettings['MAP_FILTER_IDS'] = [{}];"
+        "_defaultSettings['GYM_FILTER'] = [{}];"
+        "_defaultSettings['TRASH_IDS'] = [{}]; ".format(conf.FIXED_OPACITY, conf.SHOW_TIMER, ', '.join(str(p_id) for p_id in conf.RAIDS_FILTER), ', '.join(str(p_id) for p_id in conf.MAP_FILTER_IDS), ', '.join(str(p_id) for p_id in conf.GYM_FILTER), ', '.join(str(p_id) for p_id in conf.TRASH_IDS)))
+
+    template = env.get_template('custom.html' if conf.LOAD_CUSTOM_HTML_FILE else 'newmap.html')
+    return html(template.render(
+        area_name=conf.AREA_NAME,
+        user_name=username,
+        map_center=center,
+        map_provider_url=conf.MAP_PROVIDER_URL,
+        map_provider_attribution=conf.MAP_PROVIDER_ATTRIBUTION,
+        social_links=social_links(),
+        init_js_vars=js_vars,
+        extra_css_js=Markup(css_js)
+    ))
 
 
 if conf.MAP_WORKERS:
@@ -88,9 +86,6 @@ if conf.MAP_WORKERS:
     @app.get('/workers')
     async def workers_map(request, html_map=render_worker_map()):
         return html_map
-
-
-del env
 
 
 @app.get('/data')
@@ -185,7 +180,6 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE, trash
     marker = {
         'id': 'pokemon-' + _str(pokemon['id']),
         'trash': pokemon_id in trash,
-        'name': names[pokemon_id],
         'pokemon_id': pokemon_id,
         'lat': pokemon['lat'],
         'lon': pokemon['lon'],

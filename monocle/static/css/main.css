@@ -53,7 +53,7 @@
 .fort-icon {
     border-radius: 12px;
     padding: 2px;
-    background: #fff;
+    background: transparent;
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
 }
 /*icons*/
@@ -95,7 +95,11 @@
 /*
 .toggle-raid {
 	background-image: url('../img/raid_egg.png');
-}*/
+}
+
+.no-poke {
+        background-image: url('../img/nopoke.png');
+}
 /*end icons*/
 #settings{
     position: absolute;
@@ -178,8 +182,22 @@
     margin: 0 0 0 0;
     padding: 0;
     color: white;
+    width: 125%;
+    height: 0px;
+    visibility: hidden;
+}
+
+.remaining_raid {
+    border-radius: 25px;
+    background-color: black;
+    text-align: center;
+    background-color: rgba(100, 100, 100, 0.7);
+    font-size: 10px;
+    margin: 0 0 0 0;
+    padding: 0;
+    color: white;
     width: 100%;
-	height: 0px;
+    height: 0px;
     visibility: hidden;
 }
 
@@ -200,13 +218,13 @@
     text-align: center;
     margin: 0;
     padding: 0;
-    width: 27px;
+    width: 42px;
 }
 
 .gymmarker > img {
     position: relative;
-    width: 27px;
-    height: 27px;
+    width: 42px;
+    height: 42px;
 }
 /* end raids and gyms */
 #settings>.page-header{
