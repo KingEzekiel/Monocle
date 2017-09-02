@@ -13,7 +13,6 @@ var togglegym = 0;
 var toggleraid = 0;
 var togglepoke = 0;
 
-
 //IV control lists, rare shows iv if it's %95+, ultralist shows ivs always, and hidden100 is the blacklist for always showing iv of 100% pokemons
 //var rarelist = [228, 231, 4, 176,179,133, 116, 95, 237, 158,159,157,156, 154, 155, 152,153, 79, 123, 216, 133, 149, 83, 59, 62, 65, 68, 76, 89, 103, 112, 130, 131, 137, 143, 144, 145, 146, 150, 151, 26, 31, 34, 45, 71, 94, 113, 115, 128, 139, 141, 142, 58, 129, 63, 102, 111, 125, 147, 148, 66, 154,157,160,181,186,199,208,212,214,229,230,232,233,241,242,246,247,248, 217];
 //var ultralist = [147, 217, 147, 196, 197, 137, 113, 149, 83, 59, 68,  65, 76, 89, 103, 130, 131, 143, 144, 145, 146, 150, 151, 3, 6, 9, 26, 45, 94, 115, 128, 139, 141, 142, 154,157,160,181,186,199,208,212,214,229,230,233,241,242,246,247,248, 201]
@@ -52,6 +51,23 @@ var FortIcon = L.Icon.extend({
         div.innerHTML =
             '<div class="gymmarker fort-icon" id="' + this.options.id + '">' +
             '<img src="' + this.options.iconUrl + '" />' +
+            '<div class="gym_slots">' + this.options.slots + '</div>' +
+            '</div>';
+        return div;
+    }
+});
+
+var FortIcon_Raid = L.Icon.extend({
+    options: {
+        popupAnchor: [0, -15]
+    },
+    createIcon: function() {
+        var div = document.createElement('div');
+        div.innerHTML =
+            '<div class="gymmarker fort-icon" id="' + this.options.id + '">' +
+            '<img src="' + this.options.iconUrl + '" />' +
+            '<div class="gym_slots">' + this.options.slots + '</div>' +
+            '<div class="gym_raid">' + this.options.raid_status + '</div>' +
             '</div>';
         return div;
     }
@@ -268,8 +284,14 @@ function FortMarker (raw, toggle, raid) {
     } else {
        in_battle = 1;
     }
-    if (toggle == 0) { var icon = new FortIcon({iconUrl: 'https://safarisight.com/monocle-icons/forts/' + raw.team + raw.slots_available + in_battle + '.png', id: raw.id, battle: raw.in_battle}); }
-    if (toggle == 1) { var icon = new RaidIcon({iconUrl: 'https://safarisight.com/monocle-icons/forts/' + raw.team + raw.slots_available + in_battle + '.png', id: raw.id, battle: raw.in_battle, raid_end: raid}); }
+
+    if ((toggle == 0) && (raw.raid == 'R'))  {
+       var icon = new FortIcon_Raid({iconUrl: 'https://safarisight.com/monocle-icons/forts/' + raw.team + in_battle + '.png', id: raw.id, raid_status: raw.raid, slots: raw.slots_available});
+    } else if ((toggle == 0) && (raw.raid == 'N')) {
+       var icon = new FortIcon({iconUrl: 'https://safarisight.com/monocle-icons/forts/' + raw.team + in_battle + '.png', id: raw.id, battle: raw.in_battle, slots: raw.slots_available});
+    }
+    if (toggle == 1) { var icon = new RaidIcon({iconUrl: 'https://safarisight.com/monocle-icons/forts/blank.png', id: raw.id, raid_end: raid}); }
+
     var marker = L.marker([raw.lat, raw.lon], {icon: icon, opacity: 1});
     marker.raw = raw;
     markers[raw.id] = marker;
@@ -324,9 +346,11 @@ function addPokemonToMap (data, map) {
     }
 }
 
-function parseGyms(gym_data, raid_data)
+function parseGyms(gym_data, raid_data, gyms)
 {
 
+
+ if (gyms == 0) {
     raidPreference1 = getPreference('raids-'+1);
     raidPreference2 = getPreference('raids-'+2);
     raidPreference3 = getPreference('raids-'+3);
@@ -351,7 +375,24 @@ function parseGyms(gym_data, raid_data)
          gym_data[i] = undefined;
        }
     }
+  }
 
+ if (gyms == 1) {
+
+     let raid_fort = [];
+     let raid_level = [];
+     for (var i = 0; i < Object.keys(raid_data).length; i++) {
+           raid_fort[i] = 'fort-' + raid_data[i]['fort_id'];
+   }
+
+    for (var i = 0; i < Object.keys(gym_data).length; i++) {
+       if ($.inArray(gym_data[i]['id'], raid_fort) != -1) {
+         gym_data[i]['raid'] = 'R';
+       } else {
+         gym_data[i]['raid'] = 'N';
+         }
+    }
+  }
 
 }
 
@@ -557,11 +598,12 @@ function getGyms (toggle) {
         });
     }));
     Promise.all(promises).then(function (data) {
-        if ((toggle == 1) && (toggleraid == 1)) { parseGyms(data[0], data[1]); }
+        if ((toggle == 1) && (toggleraid == 1)) { parseGyms(data[0], data[1], 0); }
         if ((toggle == 1) && (toggleraid == 1)) {
            addGymsToMap(data[0], map, 1, data[1])
         } else if (((toggle == 0) && (togglegym == 1)) || ((toggle == 1) && (togglegym == 1))) {
-           addGymsToMap(data[0], map, 0, data[1]);
+            parseGyms(data[0], data[1], 1);
+			addGymsToMap(data[0], map, 0, data[1]);
         }
         if ((toggle == 1) && (toggleraid == 1)) { addRaidsToMap(data[1]); }
     });
@@ -1100,7 +1142,7 @@ function spawnNotification(raw) {
    if (!isMobile) {
    var theIcon = 'https://safarisight.com/monocle-icons/icons/' + raw.pokemon_id + '.png';
    var theTitle = getPokeName(raw.pokemon_id) + ' has spawned!';
-   if (raw.atk != undefined) { 
+   if (raw.atk != undefined) {
 	var theBody = raw.atk+'/'+raw.def+'/'+raw.sta +' and Expires at ' + time(raw.expires_at);
 	} else {
 	   var theBody = 'Expires at ' + time(raw.expires_at);

@@ -322,3 +322,30 @@
     width:0px !important;
     height:0px !important;
 }
+
+.gym_raid {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    line-height: 15px;
+    font-weight: bold;
+    bottom: 0px;
+    right: 0;
+    border-radius: 12px;
+    background: black;
+    color: white;
+}
+
+.gym_slots {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    line-height: 15px;
+    font-weight: bold;
+    bottom: 30px;
+    right: 40;
+    border-radius: 12px;
+    background: black;
+    color: white;
+}
+
