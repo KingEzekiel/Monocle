@@ -268,13 +268,13 @@
     text-align: center;
     background-color: rgba(100, 100, 100, 0.7);
     font-size: 11px;
-    margin: 32px 0 0 0;
+    margin: -68px 0 0 5px;
     padding: 0;
     color: white;
+    height: 0px;
+    width:150%;
     z-index: 1000;
     visibility:hidden;
-    height:0px;
-    width:0px;
 }
 
 .israre {
@@ -291,6 +291,8 @@
     height:15px !important;
 }
 #iv90 {
+    color:blue !important;
+    background-color: white !important;
     visibility: visible !important;
     width: 100% !important;
     height:15px !important;
@@ -318,7 +320,7 @@
 }
 
 #iv0 {
-    visibility: hidden !important;
+    visibility: visible !important;
     width:0px !important;
     height:0px !important;
 }

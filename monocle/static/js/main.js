@@ -12,12 +12,6 @@ var _gyms_labels = ['Empty&nbsp', ' Mystic&nbsp', 'Valor&nbsp&nbsp&nbsp', 'Insti
 var togglegym = 0;
 var toggleraid = 0;
 var togglepoke = 0;
-
-//IV control lists, rare shows iv if it's %95+, ultralist shows ivs always, and hidden100 is the blacklist for always showing iv of 100% pokemons
-//var rarelist = [228, 231, 4, 176,179,133, 116, 95, 237, 158,159,157,156, 154, 155, 152,153, 79, 123, 216, 133, 149, 83, 59, 62, 65, 68, 76, 89, 103, 112, 130, 131, 137, 143, 144, 145, 146, 150, 151, 26, 31, 34, 45, 71, 94, 113, 115, 128, 139, 141, 142, 58, 129, 63, 102, 111, 125, 147, 148, 66, 154,157,160,181,186,199,208,212,214,229,230,232,233,241,242,246,247,248, 217];
-//var ultralist = [147, 217, 147, 196, 197, 137, 113, 149, 83, 59, 68,  65, 76, 89, 103, 130, 131, 143, 144, 145, 146, 150, 151, 3, 6, 9, 26, 45, 94, 115, 128, 139, 141, 142, 154,157,160,181,186,199,208,212,214,229,230,233,241,242,246,247,248, 201]
-//var hidden100 = [10, 11, 13, 14, 16, 17, 41, 161, 163, 165,167,177,183,190,194, 198, 220];
-
 var currentLocationMarker;
 var currentLocationCircle;
 var pokemonInterval;
@@ -35,8 +29,26 @@ var PokemonIcon = L.Icon.extend({
               '<div class="sprite">' +
                    '<span class="sprite-' + this.options.iconID + '" /></span>' +
               '</div>' +
-              //'<div class="remaining_text_iv '+ this.options.rare +'" id="iv'+this.options.ivrange +'">' + this.options.iv.toFixed(0) +'%</div>' +
+              //'<div class="remaining_text_iv '+ this.options.rare +'" id="iv'+this.options.ivrange +'">' + this.options.iv.toFixed$
               '<div class="remaining_text" data-expire="' + this.options.expires_at + '">' + calculateRemainingTime(this.options.expires_at) + '</div>' +
+            '</div>';
+        return div;
+    }
+});
+
+var PokemonIconIV = L.Icon.extend({
+    options: {
+        popupAnchor: [0, -15]
+    },
+    createIcon: function() {
+        var div = document.createElement('div');
+        div.innerHTML =
+            '<div class="pokemarker">' +
+              '<div class="sprite">' +
+                   '<span class="sprite-' + this.options.iconID + '" /></span>' +
+              '</div>' +
+              '<div class="remaining_text" data-expire="' + this.options.expires_at + '">' + calculateRemainingTime(this.options.expires_at) + '</div>' +
+              '<div class="remaining_text_iv" id="iv'+this.options.ivrange +'">' + this.options.iv.toFixed(0) +'%</div>' +
             '</div>';
         return div;
     }
@@ -150,7 +162,7 @@ function getPopupContent (item) {
     if (item.pokemon_id == 201){
         content += ' - Form: ' + item.form;
     }
-    if (item.atk != undefined){
+    if (item.cp != undefined){
         var totaliv = 100 * (item.atk + item.def + item.sta) / 45;
         content += ' - <b>' + totaliv.toFixed(2) + '%</b></br>';
         content += 'Disappears in: ' + expires_at + '<br>';
@@ -182,11 +194,12 @@ function getOpacity (diff) {
 }
 //start markers
 function PokemonMarker (raw) {
-/*    var ivrange = 0;
+    var ivrange = 0;
 //    var rare = "notrare";
     var totaliv = 100 * (raw.atk + raw.def + raw.sta) / 45;
-    if ((ivlist.includes(item.pokemon_id) && (item.atk != undefined))){
-//    if (ivlist.includes(raw.pokemon_id) && totaliv > 80 || ultralist.includes(raw.pokemon_id)) rare = "israre";
+   /* if ((ivlist.includes(item.pokemon_id) && (item.atk != undefined))){
+//    if (ivlist.includes(raw.pokemon_id) && totaliv > 80 || ultralist.includes(raw.pokemon_id)) rare = "israre";*/
+    if (raw.cp != undefined) {
     if (totaliv > 99) ivrange = 100;
     else if(totaliv > 90) ivrange = 90;
     else if(totaliv > 80) ivrange = 80;
@@ -196,10 +209,11 @@ function PokemonMarker (raw) {
     else if(totaliv > 40) ivrange = 40;
     else if(totaliv > 30) ivrange = 30;
     else if(totaliv > 20) ivrange = 20;
-    var icon = new PokemonIcon({iconID: raw.pokemon_id, ivrange: ivrange, iv: totaliv, expires_at: raw.expires_at});
-    }
-*/
+    var icon = new PokemonIconIV({iconID: raw.pokemon_id, ivrange: ivrange, iv: totaliv, expires_at: raw.expires_at});
+    } else {
     var icon = new PokemonIcon({iconID: raw.pokemon_id, expires_at: raw.expires_at});
+    }
+
     var marker = L.marker([raw.lat, raw.lon], {icon: icon, opacity: 1});
 
     var intId = parseInt(raw.id.split('-')[1]);
@@ -207,11 +221,6 @@ function PokemonMarker (raw) {
         _last_pokemon_id = intId;
     }
 
-    /*var ishidden100 = hidden100.includes(raw.pokemon_id);
-    if (totaliv==100 && !ishidden100){
-        marker.overlay = 'Pokemon';
-    }
-	*/
     if (raw.trash) {
         marker.overlay = 'Trash';
     }
@@ -219,11 +228,7 @@ function PokemonMarker (raw) {
         marker.overlay = 'Pokemon';
     }
     var userPreference = getPreference('filter-'+raw.pokemon_id);
-    /*
-	if (totaliv==100 && !ishidden100){
-        marker.overlay = 'Pokemon';
-    }
-	*/
+
     if (userPreference === 'pokemon'){
         marker.overlay = 'Pokemon';
     }else if (userPreference === 'trash'){
@@ -285,7 +290,7 @@ function FortMarker (raw, toggle, raid) {
        in_battle = 1;
     }
 
-    if ((toggle == 0) && (raw.raid == 'R'))  {
+    if ((toggle == 0) && (raw.raid != 'N'))  {
        var icon = new FortIcon_Raid({iconUrl: 'https://safarisight.com/monocle-icons/forts/' + raw.team + in_battle + '.png', id: raw.id, raid_status: raw.raid, slots: raw.slots_available});
     } else if ((toggle == 0) && (raw.raid == 'N')) {
        var icon = new FortIcon({iconUrl: 'https://safarisight.com/monocle-icons/forts/' + raw.team + in_battle + '.png', id: raw.id, battle: raw.in_battle, slots: raw.slots_available});
@@ -349,7 +354,6 @@ function addPokemonToMap (data, map) {
 function parseGyms(gym_data, raid_data, gyms)
 {
 
-
  if (gyms == 0) {
     raidPreference1 = getPreference('raids-'+1);
     raidPreference2 = getPreference('raids-'+2);
@@ -357,7 +361,6 @@ function parseGyms(gym_data, raid_data, gyms)
     raidPreference4 = getPreference('raids-'+4);
     raidPreference5 = getPreference('raids-'+5);
     index = 0
-
 
      let raid_fort = [];
      let raid_level = [];
@@ -378,19 +381,26 @@ function parseGyms(gym_data, raid_data, gyms)
   }
 
  if (gyms == 1) {
-
+     let currentTime = new Date().getTime() / 1000;
      let raid_fort = [];
+     let raid_egg = [];
      let raid_level = [];
      for (var i = 0; i < Object.keys(raid_data).length; i++) {
-           raid_fort[i] = 'fort-' + raid_data[i]['fort_id'];
-   }
+           if (raid_data[i]['raid_start'] > currentTime) {
+              raid_egg[i] = 'fort-' + raid_data[i]['fort_id'];
+           } else {
+              raid_fort[i] = 'fort-' + raid_data[i]['fort_id'];
+           }
+     }
 
     for (var i = 0; i < Object.keys(gym_data).length; i++) {
-       if ($.inArray(gym_data[i]['id'], raid_fort) != -1) {
+       if ($.inArray(gym_data[i]['id'], raid_egg) != -1) {
+         gym_data[i]['raid'] = 'E';
+       } else if ($.inArray(gym_data[i]['id'], raid_fort) != -1) {
          gym_data[i]['raid'] = 'R';
        } else {
          gym_data[i]['raid'] = 'N';
-         }
+       }
     }
   }
 
@@ -480,7 +490,7 @@ function addRaidsToMap(data) {
         }
         if (item.raid_start > currentTime) {
             date = new Date(item.raid_start*1000);
-            $('#fort-' + item.fort_id + ' > img').attr('src', '/static/img/egg-'+item.raid_level+'.png');
+            $('#fort-' + item.fort_id + ' > img').attr('src', 'https://safarisight.com/monocle-icons/forts/raid' + item.raid_level + '.png');
             html += `<br>Slots available: ${(marker.raw.slots_available || 0)}
                 <br>In battle: ${(marker.raw.in_battle || false)}
                 <br>Guarding Pokemon: ${getPokeName(marker.raw.pokemon_id)} (#${marker.raw.pokemon_id})
@@ -578,6 +588,21 @@ function getPokemon () {
     });
 }
 
+function refreshGyms () {
+     if (overlays.Gyms.hidden) {
+        return;
+     }
+
+     if (toggleraid == 1) {
+        getGyms(1);
+     } else if (togglegym == 1) {
+        getGyms(0);
+     } else {
+        getGyms(0);
+        getGyms(1);
+     }
+}
+
 function getGyms (toggle) {
     if (overlays.Gyms.hidden) {
         return;
@@ -603,7 +628,7 @@ function getGyms (toggle) {
            addGymsToMap(data[0], map, 1, data[1])
         } else if (((toggle == 0) && (togglegym == 1)) || ((toggle == 1) && (togglegym == 1))) {
             parseGyms(data[0], data[1], 1);
-			addGymsToMap(data[0], map, 0, data[1]);
+	    addGymsToMap(data[0], map, 0, data[1]);
         }
         if ((toggle == 1) && (toggleraid == 1)) { addRaidsToMap(data[1]); }
     });
@@ -708,24 +733,22 @@ layer.addTo(map);
 
 //Uncomment lines here to re-add layers
 map.whenReady(function () {
-   overlays.Gyms.hidden = true;
+//   overlays.Gyms.hidden = true;
     $('.my-location').on('click', function () {
         GetCurrentLocation();
     });
 
     overlays.Gyms.once('add', function(e) {
-        getGyms(0);
-        getGyms(1);
+        refreshGyms();
     })
 
     $('.toggle-gym').on('click', function(){
 	if (togglegym == 0) {
 		overlays.Gyms.hidden = false;
 		map.addLayer(overlays.Gyms);
-		//getGyms(0);
-		setInterval(getGyms(0), 1200);
-		togglegym = 1;
+                togglegym = 1;
                 toggleraid = 0;
+		refreshGyms();
 		} else {
 			overlays.Gyms.hidden = true;
 			map.removeLayer(overlays.Gyms);
@@ -737,7 +760,6 @@ map.whenReady(function () {
         if (togglepoke == 1) {
                 overlays.Pokemon.hidden = false;
                 map.addLayer(overlays.Pokemon);
-                //getPokemon();
                 setInterval(getPokemon(), 30500);
                 togglepoke = 0;
                 } else {
@@ -753,8 +775,7 @@ map.whenReady(function () {
                 map.addLayer(overlays.Gyms);
                 toggleraid = 1;
                 togglegym = 0;
-                //getGyms(1);
-                setInterval(getGyms(1), 120000);
+                refreshGyms();
                 } else {
                         overlays.Gyms.hidden = true;
                         map.removeLayer(overlays.Gyms);
@@ -773,11 +794,11 @@ map.whenReady(function () {
 
     overlays.Workers.hidden = true;
     getPokemon();
-    //getGyms();
+    refreshGyms();
+    overlays.Gyms.hidden = true;
 
     setInterval(getPokemon, 30500);
-//    setInterval(getGyms(0), 120000);
- //   setInterval(getGyms(1), 120000);
+    setInterval(refreshGyms, 300000);
     //setInterval(getWorkers, 14000);
 
     currentLocationMarker = L.marker([map.getCenter().lat, map.getCenter().lng]).addTo(map);
