@@ -45,8 +45,15 @@ def render_worker_map():
 @app.get('/')
 async def fullmap(request):
     env = Environment(loader=PackageLoader('monocle', 'templates'))
-    user.username=request.headers['xuser']
-    user.userid=request.headers['xid']
+    try:
+        user.username=request.headers['xuser']
+    except KeyError:
+        pass
+    try:
+        user.userid=request.headers['xid']
+    except KeyError:
+        pass
+
     css_js = ''
 
     if conf.LOAD_CUSTOM_CSS_FILE:
