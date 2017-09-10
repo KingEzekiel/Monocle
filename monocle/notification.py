@@ -776,7 +776,12 @@ class Notifier:
                 "time_until_hidden_ms": tth * 1000
             }
         }
-
+        
+        if pokemon['form']: 
+            unown_form = pokemon['form']
+        else
+            unown_form = 0
+            
         try:
             data['message']['individual_attack'] = pokemon['individual_attack']
             data['message']['individual_defense'] = pokemon['individual_defense']
@@ -786,7 +791,7 @@ class Notifier:
             data['message']['height'] = pokemon['height']
             data['message']['weight'] = pokemon['weight']
             data['message']['gender'] = pokemon['gender']
-            data['message']['form'] = pokemon['form']
+            data['message']['form'] = unown_form
             data['message']['cp'] = pokemon['cp']
             data['message']['pokemon_level'] = pokemon['level']
         except KeyError:
