@@ -779,7 +779,7 @@ class Notifier:
         
         if pokemon['form']: 
             unown_form = pokemon['form']
-        else
+        else:
             unown_form = 0
             
         try:
