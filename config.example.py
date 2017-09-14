@@ -98,22 +98,26 @@ INCUBATE_EGGS = True      # incubate eggs if available
 # 'some' will encounter Pokémon if they are in ENCOUNTER_IDS or eligible for notification
 # 'notifying' will encounter Pokémon that are eligible for notifications
 # None will never encounter Pokémon
-ENCOUNTER = None
+ENCOUNTER = 'some'
 #ENCOUNTER_IDS = (3, 6, 9, 45, 62, 71, 80, 85, 87, 89, 91, 94, 114, 130, 131, 134)
 
-# MUST MATCH YOUR PGSCOUT CONFIG.JSON.  Will encounter based on ENCOUNTER_IDs above.  
+# MUST MATCH YOUR PGSCOUT CONFIG.JSON.  Will encounter based on ENCOUNTER_IDs above.
 # If encounter fails, worker.py will revert to the original worker with the sighting and encounter
 # but will not return any move/IV data (so your hooks dont get improper info)
-PGSCOUT_PORT ='1234'
 
-# Set the connection timeout to wait on a response from PGScout.  Default is 36 seconds.
+# Set the connection timeout to wait on a response from PGScout.  Default is 40 seconds.
 # Timeout will be connection dependent, proxy dependent, etc.  I recommend keeping it at the default.
 # Going too high will certainly guarantee a response from a Scout but will lead to greater inefficiency
 # and instability for Monocle
-#PGSCOUT_TIMEOUT = 36
+#PGSCOUT_TIMEOUT = 40
 
-#Enter in your address for PGSCOUT hook.  Leave the ':' off for the port... it will be automatically added in
-#PGSCOUT_ADDRESS = 'http://1.2.3.4'
+#Enter in your address for PGSCOUT hook.  Format follows address:port/pgscout paramter call
+#PGSCOUT_ADDRESS = ['http://1.2.3.4:1234/iv', 'http://2.3.4.5:2345/iv', 'http://3.4.5.6:3456/iv']
+
+#How many times to try to gather pokemon info through PGSCout.  The initial attempt is counted as one.  So the default of two
+#will try one more time to gather info.  BE CAREFUL SETTING THIS TOO HIGH.  Remember, your workers are WAITING for PGScout to return
+#a result before moving on
+#PGSCOUT_ATTEMPTS = 2
 
 # PokéStops
 SPIN_POKESTOPS = True  # spin all PokéStops that are within range

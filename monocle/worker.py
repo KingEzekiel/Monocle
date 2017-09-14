@@ -81,6 +81,9 @@ class Worker:
     if conf.NOTIFY:
         notifier = Notifier()
 
+    if conf.PGSCOUT_ADDRESS:
+        PGScout_cycle=cycle(conf.PGSCOUT_ADDRESS)
+
     def __init__(self, worker_no):
         self.worker_no = worker_no
         self.log = get_logger('worker-{}'.format(worker_no))
@@ -805,7 +808,7 @@ class Worker:
                             or (encounter_conf == 'some'
                             and normalized['pokemon_id'] in conf.ENCOUNTER_IDS)):
                         try:
-                            async with ClientSession(loop=LOOP) as session: 
+                            async with ClientSession(loop=LOOP) as session:
                                  await self.pgscout(session, normalized, pokemon.spawn_point_id, conf.PGSCOUT_ATTEMPTS)
                         except CancelledError:
                             db_proc.add(normalized)
@@ -911,13 +914,14 @@ class Worker:
         return pokemon_seen + forts_seen + points_seen
 
     async def pgscout(self, session, pokemon, spawn_id, retry):
+        PG_address=next(self.PGScout_cycle)
         if (retry <= 0):
             self.log.exception('PGSCout failed to gather pokemon data after ' + conf.PGSCOUT_ATTEMPTS + ' tries or you set ATTEMPTS <=0')
             return
         else:
             try:
                 async with session.get(
-                        conf.PGSCOUT_ADDRESS + ':' + conf.PGSCOUT_PORT + '/iv',
+                        PG_address,
                         params={'pokemon_id': pokemon['pokemon_id'],
                                 'encounter_id': pokemon['encounter_id'],
                                 'spawn_point_id': spawn_id,
