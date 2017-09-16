@@ -947,18 +947,20 @@ class Worker:
         distance = get_distance(self.location, pokestop_location)
         # permitted interaction distance - 4 (for some jitter leeway)
         # estimation of spinning speed limit
-        if distance > 36 or self.speed > SPINNING_SPEED_LIMIT:
+        if distance > 30 or self.speed > SPINNING_SPEED_LIMIT:
             self.error_code = '!'
             return False
 
         # randomize location up to ~1.5 meters
         self.simulate_jitter(amount=0.00001)
+        #adding a short sleep period seems to help increase spinning success
+        await self.random_sleep(0.8, 1.8)
 
         request = self.api.create_request()
         request.fort_details(fort_id = pokestop.id,
                              latitude = pokestop_location[0],
                              longitude = pokestop_location[1])
-        responses = await self.call(request, action=1.2)
+        responses = await self.call(request, action=1.3)
         name = responses['FORT_DETAILS'].name
 
         request = self.api.create_request()
@@ -967,7 +969,7 @@ class Worker:
                             player_longitude = self.location[1],
                             fort_latitude = pokestop_location[0],
                             fort_longitude = pokestop_location[1])
-        responses = await self.call(request, action=2)
+        responses = await self.call(request, action=3)
 
         try:
             result = responses['FORT_SEARCH'].result

@@ -225,9 +225,8 @@ class Sighting(Base):
     sta_iv = Column(TINY_TYPE)
     move_1 = Column(SmallInteger)
     move_2 = Column(SmallInteger)
-    cp = Column(SmallInteger)
     form = Column(SmallInteger)
-    level = Column(SmallInteger)
+    gender = Column(SmallInteger)
 
     __table_args__ = (
         UniqueConstraint(
@@ -256,10 +255,10 @@ class Mystery(Base):
     sta_iv = Column(TINY_TYPE)
     move_1 = Column(SmallInteger)
     move_2 = Column(SmallInteger)
-    cp = Column(SmallInteger)
     form = Column(SmallInteger)
-    level = Column(SmallInteger)
-    
+    gender = Column(SmallInteger)
+	
+
     __table_args__ = (
         UniqueConstraint(
             'encounter_id',
@@ -304,8 +303,10 @@ class FortSighting(Base):
     fort_id = Column(Integer, ForeignKey('forts.id'))
     last_modified = Column(Integer, index=True)
     team = Column(TINY_TYPE)
-    prestige = Column(MEDIUM_TYPE)
+    in_battle = Column(BOOLEAN, default=False)
     guard_pokemon_id = Column(TINY_TYPE)
+    slots_available = Column(TINY_TYPE)
+    time_ocuppied = Column(Integer)
 
     __table_args__ = (
         UniqueConstraint(
@@ -361,10 +362,8 @@ def add_sighting(session, pokemon):
         sta_iv=pokemon.get('individual_stamina'),
         move_1=pokemon.get('move_1'),
         move_2=pokemon.get('move_2'),
-        cp=pokemon.get('cp'),
-        form=pokemon.get('form'),
-        level=pokemon.get('level')
-
+        gender=pokemon.get('gender', 0),
+        form=pokemon.get('form', 0)
     )
     session.add(obj)
     SIGHTING_CACHE.add(pokemon)
@@ -464,9 +463,8 @@ def add_mystery(session, pokemon):
         sta_iv=pokemon.get('individual_stamina'),
         move_1=pokemon.get('move_1'),
         move_2=pokemon.get('move_2'),
-        cp=pokemon.get('cp'),
-        form=pokemon.get('form'),
-        level=pokemon.get('level')
+        gender=pokemon.get('gender', 0),
+        form=pokemon.get('form', 0)
     )
     session.add(obj)
     MYSTERY_CACHE.add(pokemon)
@@ -494,9 +492,11 @@ def add_fort_sighting(session, raw_fort):
     obj = FortSighting(
         fort=fort,
         team=raw_fort['team'],
-        prestige=raw_fort['prestige'],
         guard_pokemon_id=raw_fort['guard_pokemon_id'],
         last_modified=raw_fort['last_modified'],
+        in_battle=raw_fort['in_battle'],
+        slots_available=raw_fort['slots_available'],
+        time_ocuppied=raw_fort['time_ocuppied']
     )
     session.add(obj)
     FORT_CACHE.add(raw_fort)
@@ -566,7 +566,6 @@ def _get_forts_sqlite(session):
             fs.fort_id,
             fs.id,
             fs.team,
-            fs.prestige,
             fs.guard_pokemon_id,
             fs.last_modified,
             f.lat,
@@ -587,9 +586,11 @@ def _get_forts(session):
             fs.fort_id,
             fs.id,
             fs.team,
-            fs.prestige,
             fs.guard_pokemon_id,
             fs.last_modified,
+            fs.in_battle,
+            fs.slots_available,
+            fs.time_ocuppied,
             f.lat,
             f.lon
         FROM fort_sightings fs
