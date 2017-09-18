@@ -262,67 +262,119 @@
     font-weight: initial;
 }
 /* IV text shading */
-.remaining_text_iv {
+.poke_stats {
     border-radius: 25px;
-    background-color: black;
+    background-color: white;
     text-align: center;
     background-color: rgba(100, 100, 100, 0.7);
     font-size: 11px;
-    margin: -68px 0 0 5px;
+    margin: -69px 0 0 -5px;
     padding: 0;
-    color: white;
+    color: black;
     height: 0px;
     width:150%;
     z-index: 1000;
     visibility:hidden;
 }
 
-.israre {
-    visibility:visible;
-    width: 100% !important;
-    height:15px !important;
+.poke_level {
+    /* position: absolute;
+    width: 10px;
+    height: 10px;
+    line-height: 10px;
+    font-weight: bold;
+    bottom: -39px;
+    right: -5px;
+    border-radius: 10px;
+    background: transparent;
+    color: black;
+    font-size: 10px;
+    margin: 0px 0px 0px 0px;
+    padding: 0; */
+	
 }
 
-#iv100 {
+
+.iv100 {
     color:red !important; 
     background-color: white !important;
     visibility: visible !important;
     width: 100% !important;
     height:15px !important;
 }
-#iv90 {
+.iv90 {
     color:blue !important;
     background-color: white !important;
     visibility: visible !important;
     width: 100% !important;
     height:15px !important;
 }
-#iv80 {
+.iv80 {
 
 }
-#iv70 {
+.iv70 {
 
 }
-#iv60 {
+.iv60 {
 
 }
-#iv50 {
+.iv50 {
 
 }
-#iv40 {
+.iv40 {
 
 }
-#iv30 {
+.iv30 {
 
 }
-#iv20 {
+.iv20 {
 
 }
+.iv10 {
 
-#iv0 {
+}
+.iv0 {
+/*     color:white !important;
+    background-color: red !important;
     visibility: visible !important;
-    width:0px !important;
-    height:0px !important;
+    width: 100% !important;
+    height:15px !important; */
+}
+
+.lvl30 {
+    color:red !important; 
+    background-color: white !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height:15px !important;
+}
+.lvl25 {
+    color:orange !important;
+    background-color: white !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height:15px !important;
+}
+.lvl20 {
+    color:yellow !important;
+    background-color: white !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height:15px !important;
+}
+.lvl10 {
+    color:green !important;
+    background-color: white !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height:15px !important;
+}
+.lvl0 {
+    color:black !important;
+    background-color: white !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height:15px !important;
 }
 
 .gym_raid {
@@ -351,3 +403,15 @@
     color: white;
 }
 
+.going {
+    position: absolute;
+    width: 40px; 
+    height: 15px;
+    line-height: 15px;
+    font-weight: bold;
+    bottom: 55px;
+    right: 1px;
+    border-radius: 12px;
+    background: black;
+    color: white;
+}
