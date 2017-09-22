@@ -206,8 +206,6 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE, trash
         marker['sta'] = pokemon['sta_iv']
         marker['move1'] = moves[move1]
         marker['move2'] = moves[move2]
-        marker['damage1'] = damage[move1]
-        marker['damage2'] = damage[move2]
         marker['cp'] = pokemon['cp']
         marker['level'] = pokemon['level']
     return marker

@@ -48,7 +48,7 @@ var PokemonIconIV = L.Icon.extend({
                    '<span class="sprite-' + this.options.iconID + '" /></span>' +
               '</div>' +
               '<div class="remaining_text" data-expire="' + this.options.expires_at + '">' + calculateRemainingTime(this.options.expires_at) + '</div>' +
-              '<div class="poke_stats"><span class="iv'+this.options.ivrange +'">' + this.options.iv.toFixed(0) +'%</span>/<span class="poke_level lvl' + this.options.lvlrange +'">' + this.options.level +'</span></div>' +
+              '<div class="poke_stats"><span class="poke_iv iv'+this.options.ivrange +'">' + this.options.iv.toFixed(0) +'%</span><span class="poke_level lvl' + this.options.lvlrange +'">| ' + this.options.level +'</span></div>' +
             '</div>';
         return div;
     }
@@ -205,22 +205,22 @@ function PokemonMarker (raw) {
 //    if (ivlist.includes(raw.pokemon_id) && totaliv > 80 || ultralist.includes(raw.pokemon_id)) rare = "israre";*/
     if (raw.cp != undefined) {
     if (totaliv > 99) ivrange = 100;
-    else if(totaliv => 90) ivrange = 90;
-    else if(totaliv => 80) ivrange = 80;
+    else if(totaliv >= 90) ivrange = 90;
+    /*else if(totaliv => 80) ivrange = 80;
     else if(totaliv => 70) ivrange = 70;
     else if(totaliv => 60) ivrange = 60;
     else if(totaliv => 50) ivrange = 50;
     else if(totaliv => 40) ivrange = 40;
     else if(totaliv => 30) ivrange = 30;
     else if(totaliv => 20) ivrange = 20;
-    else if((totaliv > 0) && (totaliv < 20)) ivrange = 10;
+    else if((totaliv > 0) && (totaliv < 20)) ivrange = 10;*/
 
     var pokelevel = raw.level;
     if (pokelevel > 29) lvlrange = 30;
-    else if(pokelevel => 25) lvlrange = 25;
-    else if(pokelevel => 20) lvlrange = 20;
+    else if(pokelevel >= 25) lvlrange = 25;
+    /*else if(pokelevel => 20) lvlrange = 20;
     else if(pokelevel => 10) lvlrange = 10;
-    else if(pokelevel => 0) lvlrange = 0;
+    else if(pokelevel => 0) lvlrange = 0;*/
 
     var icon = new PokemonIconIV({iconID: raw.pokemon_id, ivrange: ivrange, iv: totaliv, level: raw.level, lvlrange: lvlrange, expires_at: raw.expires_at});
     } else {
