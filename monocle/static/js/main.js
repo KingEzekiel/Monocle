@@ -48,7 +48,7 @@ var PokemonIconIV = L.Icon.extend({
                    '<span class="sprite-' + this.options.iconID + '" /></span>' +
               '</div>' +
               '<div class="remaining_text" data-expire="' + this.options.expires_at + '">' + calculateRemainingTime(this.options.expires_at) + '</div>' +
-              '<div class="poke_stats"><span class="iv'+this.options.ivrange +'">' + this.options.iv.toFixed(0) +'%</span>/<span class="poke_level lvl' + this.options.lvlrange +'">' + this.options.level +'</span></div>' +
+              '<div class="poke_stats"><span class="poke_iv iv'+this.options.ivrange +'">' + this.options.iv.toFixed(0) +'%</span><span class="poke_level lvl' + this.options.lvlrange +'">| ' + this.options.level +'</span></div>' +
             '</div>';
         return div;
     }
@@ -205,22 +205,22 @@ function PokemonMarker (raw) {
 //    if (ivlist.includes(raw.pokemon_id) && totaliv > 80 || ultralist.includes(raw.pokemon_id)) rare = "israre";*/
     if (raw.cp != undefined) {
     if (totaliv > 99) ivrange = 100;
-    else if(totaliv => 90) ivrange = 90;
-    else if(totaliv => 80) ivrange = 80;
+    else if(totaliv >= 90) ivrange = 90;
+    /*else if(totaliv => 80) ivrange = 80;
     else if(totaliv => 70) ivrange = 70;
     else if(totaliv => 60) ivrange = 60;
     else if(totaliv => 50) ivrange = 50;
     else if(totaliv => 40) ivrange = 40;
     else if(totaliv => 30) ivrange = 30;
     else if(totaliv => 20) ivrange = 20;
-    else if((totaliv > 0) && (totaliv < 20)) ivrange = 10;
+    else if((totaliv > 0) && (totaliv < 20)) ivrange = 10;*/
 
     var pokelevel = raw.level;
     if (pokelevel > 29) lvlrange = 30;
-    else if(pokelevel => 25) lvlrange = 25;
-    else if(pokelevel => 20) lvlrange = 20;
+    else if(pokelevel >= 25) lvlrange = 25;
+    /*else if(pokelevel => 20) lvlrange = 20;
     else if(pokelevel => 10) lvlrange = 10;
-    else if(pokelevel => 0) lvlrange = 0;
+    else if(pokelevel => 0) lvlrange = 0;*/
 
     var icon = new PokemonIconIV({iconID: raw.pokemon_id, ivrange: ivrange, iv: totaliv, level: raw.level, lvlrange: lvlrange, expires_at: raw.expires_at});
     } else {
@@ -313,22 +313,37 @@ function FortMarker (raw, toggle, raid, going) {
     var marker = L.marker([raw.lat, raw.lon], {icon: icon, opacity: 1});
     marker.raw = raw;
     markers[raw.id] = marker;
-    var content = ''
-    if (raw.team === 0) {
-        content = '<b>An empty Gym!</b>'
-    } else if (raw.team === 1) {
-        content = '<b>Team Mystic</b>'
-    } else if (raw.team === 2) {
-        content = '<b>Team Valor</b>'
-    } else if (raw.team === 3) {
-        content = '<b>Team Instinct</b>'
+
+    if (raw.in_battle == true)
+    {
+        var content = '<center><h2>' + raw.gym_name + '</h2></center>';
+    } else {
+        var content = '<center><h2><img src=' + raw.gym_image + ' height=20 width=20>' + raw.gym_name + '<img src=' + raw.gym_image + ' height=20 width=20></h2></center>';
     }
+
+    if (raw.team === 0) {
+        var customOptions = { 'className': 'popupEmpty' };
+    } else if (raw.team === 1) {
+        var customOptions = { 'className': 'popupMystic' };
+    } else if (raw.team === 2) {
+//        content = '<center><b><h3><img src=' + raw.gym_image + ' height=40 width=40><font color="red">Team Valor</font><img src=' + raw.gym_image + ' height=40 width=40></h3></b></center>'
+        var customOptions = { 'className': 'popupValor' };
+    } else if (raw.team === 3) {
+//        content = '<center><b><h3><img src=' + raw.gym_image + ' height=40 width=40><font color="yellow">Team Instinct</font><img src=' + raw.gym_image + ' height=40 width=40></h3></b></center>'
+        var customOptions = { 'className': 'popupInstinct' };
+    }
+
+//    content += '<center><h2>' + raw.gym_name + '</h2></center>'
+    content += '<center><img src=' + raw.gym_image + ' height=100 width=300></center>'
     content += '<br>Slots available: ' + (raw.slots_available || 0) +
         '<br>In battle: ' + (raw.in_battle || false)
         '<br>Guarding Pokemon: ' + getPokeName(raw.pokemon_id) + ' (#' + raw.pokemon_id + ')';
     content += '<br>=&gt; <a href=https://www.google.com/maps/?daddr='+ raw.lat + ','+ raw.lon +' target="_blank" title="See in Google Maps">Get directions</a>';
+
+//var customOptions = { 'className': 'popupValor' }
+
     marker.default = content;
-    marker.bindPopup(content);
+    marker.bindPopup(content, customOptions);
     return marker;
 }
 
@@ -490,6 +505,7 @@ function addGymsToMap (data, map, toggle, raid, rsvp) {
 }
 
 function addRaidsToMap(data, rsvp) {
+console.log(data);
     let currentTime = new Date().getTime() / 1000;
     data.forEach(function (item) {
         if (item != undefined) {
@@ -498,25 +514,26 @@ function addRaidsToMap(data, rsvp) {
 	let popup = marker.getPopup();
         let date = null;
         if (marker.raw.team === 0) {
-            html += '<b>An empty Gym!</b>';
+//            html += '<center><b><h3><font color="grey">An empty gym!</font></b></h3></center>';
         }else if (marker.raw.team === 1 ) {
-            html += '<b>Team Mystic</b>';
+//            html += '<center><b><h3><font color="blue">Team Mystic</font></b></h3></center>';
             $('#fort-' + item.fort_id).css('background', '#2196f3');
         }else if (marker.raw.team === 2 ) {
-            html += '<b>Team Valor</b>';
+//            html += '<center><b><h3><font color="red">Team Valor</font></b></h3></center>';
             $('#fort-' + item.fort_id).css('background', '#d32f2f');
         }else if (marker.raw.team === 3 ) {
-            html += '<b>Team Instinct</b>';
+//            html += '<center><b><h3><font color="yellow">Team Instinct</font></b></h3></center>';
             $('#fort-' + item.fort_id).css('background', '#ffeb3b');
         }
         if (item.raid_start > currentTime) {
             date = new Date(item.raid_start*1000);
             $('#fort-' + item.fort_id + ' > img').attr('src', 'https://safarisight.com/monocle-icons/forts/raid' + item.raid_level + '.png');
-            html += `<br>Slots available: ${(marker.raw.slots_available || 0)}
-                <br>In battle: ${(marker.raw.in_battle || false)}
-                <br>Guarding Pokemon: ${getPokeName(marker.raw.pokemon_id)} (#${marker.raw.pokemon_id})
-                <br>Raid level: ${item.raid_level}
-                <br>Raid starts in: <span class="raid-timer" data-timer="${item.raid_start}">${calculateRemainingTime(item.raid_start)}</span> (${date.toLocaleTimeString()})<br>`;
+            html += `<h2><center>${(item.gym_name)}</center></h2>
+                <br><b><u>Slots available:</b></u> ${(marker.raw.slots_available || 0)}
+                <br><b><u>In battle:</b></u> ${(marker.raw.in_battle || false)}
+                <br><b><u>Guarding Pokemon:</b></u> ${getPokeName(marker.raw.pokemon_id)} (#${marker.raw.pokemon_id})
+                <br><b><u>Raid level:</b></u> ${item.raid_level}
+                <br><b><u>Raid starts in:</b></u> <span class="raid-timer" data-timer="${item.raid_start}">${calculateRemainingTime(item.raid_start)}</span> (${date.toLocaleTimeString()})<br>`;
             html += buildRsvp(item, rsvp)
             html += `<br>=&gt; <a href="https://www.google.com/maps/?daddr=${marker.raw.lat},${marker.raw.lon}" target="_blank" title="See in Google Maps">Get directions</a>`;
 
@@ -531,7 +548,8 @@ function addRaidsToMap(data, rsvp) {
                     <b>Raid ends in:</b> <span class="raid-timer" data-timer="${item.raid_end}">${calculateRemainingTime(item.raid_end)}</span> (${date.toLocaleTimeString()})<br>`;
             } else {
                 $('#fort-' + item.fort_id + ' > img').attr('src', 'https://safarisight.com/monocle-icons/icons/' + item.pokemon_id + '.png')
-                html += `<br><b>${getPokeName(item.pokemon_id)}</b> - <a href="https://pokemongo.gamepress.gg/pokemon/'${item.pokemon_id}">#${item.pokemon_id}</a><br>
+                html += `<h2><center>${(item.gym_name)}</center></h2>
+                        <b>${getPokeName(item.pokemon_id)}</b> - <a href="https://pokemongo.gamepress.gg/pokemon/'${item.pokemon_id}">#${item.pokemon_id}</a><br>
                         <b>Moveset:</b> ${item.move_1} / ${item.move_2} <br>
                         <b>CP:</b> ${item.cp} <br>
                         <b>Raid level:</b> ${item.raid_level}<br>
@@ -703,10 +721,14 @@ function getGyms (toggle) {
             resolve(response);
         });
     }));
-
-
+    promises.push(new Promise(function (resolve, reject) {
+        $.get('/gym_defender', function (response) {
+            resolve(response);
+        });
+    }));
 
     Promise.all(promises).then(function (data) {
+console.log(data[2]);
         if ((toggle == 1) && (toggleraid == 1)) { parseGyms(data[0], data[1], 0); }
         if ((toggle == 1) && (toggleraid == 1)) {
            addGymsToMap(data[0], map, 1, data[1], data[2])

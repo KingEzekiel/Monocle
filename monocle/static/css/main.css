@@ -276,25 +276,9 @@
     z-index: 1000;
     visibility:hidden;
 }
-
-.poke_level {
-    /* position: absolute;
-    width: 10px;
-    height: 10px;
-    line-height: 10px;
-    font-weight: bold;
-    bottom: -39px;
-    right: -5px;
-    border-radius: 10px;
-    background: transparent;
-    color: black;
-    font-size: 10px;
-    margin: 0px 0px 0px 0px;
-    padding: 0; */
+.poke_iv{
 	
 }
-
-
 .iv100 {
     color:red !important; 
     background-color: white !important;
@@ -309,38 +293,9 @@
     width: 100% !important;
     height:15px !important;
 }
-.iv80 {
+.poke_level {
 
 }
-.iv70 {
-
-}
-.iv60 {
-
-}
-.iv50 {
-
-}
-.iv40 {
-
-}
-.iv30 {
-
-}
-.iv20 {
-
-}
-.iv10 {
-
-}
-.iv0 {
-/*     color:white !important;
-    background-color: red !important;
-    visibility: visible !important;
-    width: 100% !important;
-    height:15px !important; */
-}
-
 .lvl30 {
     color:red !important; 
     background-color: white !important;
@@ -349,32 +304,14 @@
     height:15px !important;
 }
 .lvl25 {
-    color:orange !important;
+    color:blue !important;
     background-color: white !important;
     visibility: visible !important;
     width: 100% !important;
     height:15px !important;
 }
-.lvl20 {
-    color:yellow !important;
-    background-color: white !important;
-    visibility: visible !important;
-    width: 100% !important;
-    height:15px !important;
-}
-.lvl10 {
-    color:green !important;
-    background-color: white !important;
-    visibility: visible !important;
-    width: 100% !important;
-    height:15px !important;
-}
-.lvl0 {
-    color:black !important;
-    background-color: white !important;
-    visibility: visible !important;
-    width: 100% !important;
-    height:15px !important;
+.lvl0{
+	display: none;
 }
 
 .gym_raid {
@@ -414,4 +351,28 @@
     border-radius: 12px;
     background: black;
     color: white;
+}
+
+.popupValor .leaflet-popup-tip,
+.popupValor .leaflet-popup-content-wrapper {
+ background: red;
+ color: #FFFFFF;
+}
+
+.popupMystic .leaflet-popup-tip,
+.popupMystic .leaflet-popup-content-wrapper {
+ background: blue;
+ color: #FFFFFF;
+}
+
+.popupInstinct .leaflet-popup-tip,
+.popupInstinct .leaflet-popup-content-wrapper {
+ background: gold;
+ color: #FFFFFF;
+}
+
+.popupEmpty .leaflet-popup-tip,
+.popupEmpty .leaflet-popup-content-wrapper {
+ background: grey;
+ color: #FFFFFF;
 }
