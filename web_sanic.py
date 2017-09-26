@@ -12,7 +12,9 @@ from monocle import sanitized as conf
 from monocle.bounds import center
 from monocle.names import DAMAGE, MOVES, POKEMON
 from monocle.web_utils import get_scan_coords, get_worker_markers, Workers, get_args
+import re
 import user
+import dataset
 
 app = Sanic(__name__)
 app.static('/static', resource_filename('monocle', 'static'))
@@ -120,9 +122,10 @@ async def gym_data(request, names=POKEMON, _str=str):
                 fs.team,
                 fs.guard_pokemon_id,
                 fs.last_modified,
-                fs.in_battle,
+                fs.is_in_battle,
                 fs.slots_available,
-                fs.time_ocuppied,
+                f.name,
+                f.url,
                 f.lat,
                 f.lon
             FROM fort_sightings fs
@@ -135,16 +138,52 @@ async def gym_data(request, names=POKEMON, _str=str):
         ''')
     return json([{
             'id': 'fort-' + _str(fort['fort_id']),
-            'sighting_id': fort['id'],
+ #           'sighting_id': fort['id'],
+            'last_modified': fort['last_modified'],
             'pokemon_id': fort['guard_pokemon_id'],
-            'pokemon_name': names[fort['guard_pokemon_id']],
+#            'pokemon_name': names[fort['guard_pokemon_id']],
             'team': fort['team'],
-            'in_battle': fort['in_battle'],
+            'in_battle': fort['is_in_battle'],
             'slots_available': fort['slots_available'],
-            'time_ocuppied': fort['time_ocuppied'],
+            'gym_name': (fort['name'][:15] + '...') if len(fort['name']) > 18 else fort['name'],
+            'gym_image': fort['url'],
             'lat': fort['lat'],
             'lon': fort['lon']
     } for fort in results])
+
+@app.get('/gym_defender')
+async def gym_defender(request, names=POKEMON,moves=MOVES, _str=str):
+    async with app.pool.acquire() as conn:
+        results = await conn.fetch('''
+            SELECT
+                f.id,
+                gd.fort_id,
+                gd.owner_name,
+                gd.pokemon_id,
+                gd.nickname,
+                gd.cp,
+                gd.created,
+                gd.atk_iv,
+                gd.def_iv,
+                gd.sta_iv,
+                gd.move_1,
+                gd.move_2
+            FROM forts f
+            JOIN gym_defenders gd ON f.id=gd.fort_id
+        ''')
+    return json([{
+            'id': 'fort-' + _str(gd['fort_id']),
+            'pokemon_id': gd['pokemon_id'],
+            'trainer': re.sub('[^A-Za-z0-9 ]+', '', gd['owner_name']),
+            'mon_nick': gd['nickname'],
+            'cp': gd['cp'],
+            'last_scan': gd['created'],
+            'atk': gd['atk_iv'],
+            'def': gd['def_iv'],
+            'sta': gd['sta_iv'],
+            'move_1': moves[gd['move_1']],
+            'move_2': moves[gd['move_2']]
+    } for gd in results])
 
 @app.get('/raid_data')
 async def raid_data(request, names=POKEMON, _str=str, _time=time):
@@ -152,17 +191,19 @@ async def raid_data(request, names=POKEMON, _str=str, _time=time):
         results = await conn.fetch('''
         SELECT
             f.id,
-            ri.raid_start,
-            ri.raid_end,
+            f.name,
+            ri.time_battle,
+            ri.time_end,
             ri.pokemon_id,
             ri.cp,
+            ri.external_id,
             ri.move_1,
             ri.move_2,
-            ri.raid_level
+            ri.level
         FROM forts f
-        JOIN raid_info ri ON ri.fort_id = f.id
-        WHERE ri.raid_start >= {}
-        OR ri.raid_end >= {}
+        JOIN raids ri ON ri.fort_id = f.id
+        WHERE ri.time_battle >= {}
+        OR ri.time_end >= {}
         '''.format(_time(), _time()))
         return json(list(map(raid_to_marker, results)))
 
@@ -184,6 +225,35 @@ async def get_pokestops(request, _dict=dict):
 async def scan_coords(request):
     return json(get_scan_coords())
 
+@app.get('/put_rsvp')
+async def put_rsvp(request):
+    status=''
+    db = dataset.connect('sqlite:///rsvp.db')
+    table = db['rsvp']
+
+    if (request.args.get('going') == '1'):
+         table.insert(dict(going=request.args.get('going', 1), name=request.args.get('name', 'Patron'), uid=request.args.get('uid', 0), expires=request.args.get('expires', 0), fort_id=request.args.get('fort_id', -1), seed=request.args.get('seed', 0)))
+         db.commit()
+         return json({"status": "rsvp"})
+
+    if (request.args.get('going') == '0'):
+         find_user = table.find(fort_id=request.args.get('fort_id'))
+
+         for row in find_user:
+             if (row['uid'] == request.args.get('uid')):
+                  table.delete(id=row['id'])
+         db.commit()
+         return json({"status": "removed"})
+
+    return json({"status": "none"})
+
+@app.get('/get_rsvp')
+async def get_rsvp(request):
+    epoch_time = int(time())
+    db = dataset.connect('sqlite:///rsvp.db')
+    table = db['rsvp']
+    result = db.query('SELECT name, uid, expires, fort_id, seed FROM rsvp WHERE expires > ' + str(epoch_time))
+    return json(result)
 
 def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE, trash=conf.TRASH_IDS, _str=str):
     pokemon_id = pokemon['pokemon_id']
@@ -206,8 +276,6 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE, trash
         marker['sta'] = pokemon['sta_iv']
         marker['move1'] = moves[move1]
         marker['move2'] = moves[move2]
-        marker['damage1'] = damage[move1]
-        marker['damage2'] = damage[move2]
         marker['cp'] = pokemon['cp']
         marker['level'] = pokemon['level']
     return marker
@@ -215,9 +283,11 @@ def sighting_to_marker(pokemon, names=POKEMON, moves=MOVES, damage=DAMAGE, trash
 def raid_to_marker(raid, names=POKEMON, moves=MOVES):
     marker = {
         'fort_id': raid['id'],
-        'raid_start': raid['raid_start'],
-        'raid_end': raid['raid_end'],
-        'raid_level': raid['raid_level']
+        'raid_start': raid['time_battle'],
+        'raid_end': raid['time_end'],
+        'raid_level': raid['level'],
+        'raid_seed': raid['external_id'],
+        'gym_name': raid['name']
     }
     pokemon_id = raid['pokemon_id']
     if pokemon_id:

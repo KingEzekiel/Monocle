@@ -6,9 +6,7 @@ var _NotificationIconUrl = 'https://raw.githubusercontent.com/Avatar690/monocle-
 var _PokestopIconUrl = 'https://raw.githubusercontent.com/Avatar690/monocle-icons/master/assets/stop.png';
 var _NotificationID = [0]; //This is the default list for notifications
 var _raids_count = 5; //default list for raids
-var _raids_labels = ['', '', '', '', ''];
 var _gyms_count = 4;  //default list for gyms
-var _gyms_labels = ['Empty&nbsp', ' Mystic&nbsp', 'Valor&nbsp&nbsp&nbsp', 'Instinct'];
 var togglegym = 0;
 var toggleraid = 0;
 var togglepoke = 0;
@@ -16,6 +14,7 @@ var currentLocationMarker;
 var currentLocationCircle;
 var pokemonInterval;
 var nearbyInterval;
+var max_defenders = 6;
 //end declarations
 //start icons
 var PokemonIcon = L.Icon.extend({
@@ -29,7 +28,6 @@ var PokemonIcon = L.Icon.extend({
               '<div class="sprite">' +
                    '<span class="sprite-' + this.options.iconID + '" /></span>' +
               '</div>' +
-              //'<div class="poke_iv '+ this.options.rare +'" id="iv'+this.options.ivrange +'">' + this.options.iv.toFixed$
               '<div class="remaining_text" data-expire="' + this.options.expires_at + '">' + calculateRemainingTime(this.options.expires_at) + '</div>' +
             '</div>';
         return div;
@@ -294,13 +292,24 @@ function PokemonMarker (raw) {
     return marker;
 }
 
-function FortMarker (raw, toggle, raid, going) {
+function FortMarker (raw, toggle, raid, going, defenders) {
+    var r_start = new Date(raw.raid_start*1000);
+    var r_end = new Date(raw.raid_end*1000);
+    var d = new Date(0);
+    d.setUTCSeconds(raw.last_modified);
+    d_tostr = d + '';
+    timestamp = d_tostr.split(' ');
+
+
     if (going == undefined) { going = 0; }
     if (raw.in_battle == false)
     {
        in_battle = 0;
+       var content = '<center><h2><u>' + raw.gym_name + '</u></h2></center>';
+
     } else {
        in_battle = 1;
+       var content = '<center><h2><img src="https://safarisight.com/monocle-icons/forts/inbattle.png" height=20 width=20><u>' + raw.gym_name + '</u><img src="https://safarisight.com/monocle-icons/forts/inbattle.png" height=20 width=20></h2></center>';
     }
 
     if ((toggle == 0) && (raw.raid != 'N'))  {
@@ -314,33 +323,30 @@ function FortMarker (raw, toggle, raid, going) {
     marker.raw = raw;
     markers[raw.id] = marker;
 
-    if (raw.in_battle == true)
-    {
-        var content = '<center><h2>' + raw.gym_name + '</h2></center>';
-    } else {
-        var content = '<center><h2><img src=' + raw.gym_image + ' height=20 width=20>' + raw.gym_name + '<img src=' + raw.gym_image + ' height=20 width=20></h2></center>';
-    }
-
     if (raw.team === 0) {
         var customOptions = { 'className': 'popupEmpty' };
     } else if (raw.team === 1) {
         var customOptions = { 'className': 'popupMystic' };
     } else if (raw.team === 2) {
-//        content = '<center><b><h3><img src=' + raw.gym_image + ' height=40 width=40><font color="red">Team Valor</font><img src=' + raw.gym_image + ' height=40 width=40></h3></b></center>'
         var customOptions = { 'className': 'popupValor' };
     } else if (raw.team === 3) {
-//        content = '<center><b><h3><img src=' + raw.gym_image + ' height=40 width=40><font color="yellow">Team Instinct</font><img src=' + raw.gym_image + ' height=40 width=40></h3></b></center>'
         var customOptions = { 'className': 'popupInstinct' };
     }
 
-//    content += '<center><h2>' + raw.gym_name + '</h2></center>'
-    content += '<center><img src=' + raw.gym_image + ' height=100 width=300></center>'
-    content += '<br>Slots available: ' + (raw.slots_available || 0) +
-        '<br>In battle: ' + (raw.in_battle || false)
-        '<br>Guarding Pokemon: ' + getPokeName(raw.pokemon_id) + ' (#' + raw.pokemon_id + ')';
-    content += '<br>=&gt; <a href=https://www.google.com/maps/?daddr='+ raw.lat + ','+ raw.lon +' target="_blank" title="See in Google Maps">Get directions</a>';
+    content += '<center><img src=' + raw.gym_image + ' height=100 width=300></center>';
 
-//var customOptions = { 'className': 'popupValor' }
+    if (raw.boss_id != undefined) {
+         content += `<center><b>Raid Level: </b>${raw.level}<br><b>Ends At: </b>${r_end.toLocaleTimeString()}`;
+         content += '<br><img src="https://www.safarisight.com/monocle-icons/icons/' + raw.boss_id + '.png"></center>';
+    } else if (raw.level != undefined) {
+         content += `<center><b>RAID STARTS AT: </b>${r_start.toLocaleTimeString()}`;
+         content += '<br><img src="https://www.safarisight.com/monocle-icons/forts/raid' + raw.level + '.png"></center>';
+    }
+
+    content += '<br><b><center>Gym Info Last Updated </b>' + timestamp[0] + ' ' + timestamp[1] + ' ' + timestamp[2] + ' ' + timestamp[3] + '@' + timestamp[4] + '</center>';
+    content += '<center>=&gt; <a style="color: #ffffff" href=https://www.google.com/maps/?daddr='+ raw.lat + ','+ raw.lon +' target="_blank" title="See in Google Maps">Get directions</a></center>';
+
+    content += defenders;
 
     marker.default = content;
     marker.bindPopup(content, customOptions);
@@ -361,6 +367,44 @@ function WorkerMarker (raw) {
 }
 //end markers
 //add and parsing functions
+function gymPopup(data) {
+    var popup = document.getElementById(data['id']);
+    popup.classList.toggle("show");
+}
+
+function buildDefender (fort, defenders) {
+    content = '<center><table width=240 height=60>';
+    content_cp = '<tr>';
+    content_def = '<tr>';
+    content_txt = '<tr>';
+    content_lastscan = '';
+
+    defenders.forEach(function (item) {
+       if (fort == item.id) {
+        popupID = fort + item.trainer;
+        popupID = popupID.replace('-', '');
+        content_txt += '<th><center><b>CP</b></center></th>';
+        content_cp += '<td><center><b>' + item.cp + '</b></center></td>';
+        content_def += '<td><center><div class="popup" onclick="gymPopup('+popupID+
+        ')"><span class="popuptext" id="'+popupID+'"><b>&nbspTrainer:</b> ' + item.trainer + '<b><br>&nbspQuick Move: </b>' +
+        item.move_1 + '<b><br>&nbspCharge Move: </b>' + item.move_2 +
+        '</span><img src="https://www.safarisight.com/monocle-icons/icons/' + item.pokemon_id + '.png"></center></td></div>';
+        let d = new Date(0);
+        d.setUTCSeconds(item.last_scan);
+        d_tostr = d + '';
+        timestamp = d_tostr.split(' ');
+        content_lastscan = '<b><center>Defenders last updated: </b>' +
+        timestamp[0] + ' ' + timestamp[1] + ' ' + timestamp[2] + ' ' + timestamp[3] + '@' + timestamp[4] + '</center>'
+       }
+ });
+
+ content_txt += '</tr>';
+ content_cp += '</tr>';
+ content_def += '</tr>';
+ content += content_txt + content_cp + content_def + '</table></center>' + content_lastscan;
+ return content;
+}
+
 function addPokemonToMap (data, map) {
     data.forEach(function (item) {
         // Already placed? No need to do anything, then
@@ -413,28 +457,45 @@ function parseGyms(gym_data, raid_data, gyms)
      let raid_fort = [];
      let raid_egg = [];
      let raid_level = [];
+     let raid_boss = [];
+     let raid_start = [];
+     let raid_end = [];
+     let ind = 0;
      for (var i = 0; i < Object.keys(raid_data).length; i++) {
            if (raid_data[i]['raid_start'] > currentTime) {
               raid_egg[i] = 'fort-' + raid_data[i]['fort_id'];
+              raid_level[i] = raid_data[i]['raid_level'];
+              raid_start[i] = raid_data[i]['raid_start'];
            } else {
               raid_fort[i] = 'fort-' + raid_data[i]['fort_id'];
+              raid_boss[i]  = raid_data[i]['pokemon_id'];
+              raid_level[i] = raid_data[i]['raid_level'];
+              raid_end[i] = raid_data[i]['raid_end'];
            }
      }
 
     for (var i = 0; i < Object.keys(gym_data).length; i++) {
        if ($.inArray(gym_data[i]['id'], raid_egg) != -1) {
          gym_data[i]['raid'] = 'E';
-       } else if ($.inArray(gym_data[i]['id'], raid_fort) != -1) {
+         ind = raid_egg.indexOf(gym_data[i]['id']);
+         gym_data[i]['level'] = raid_level[ind];
+         gym_data[i]['raid_start'] = raid_start[ind];
+         } else if ($.inArray(gym_data[i]['id'], raid_fort) != -1) {
          gym_data[i]['raid'] = 'R';
+         ind = raid_fort.indexOf(gym_data[i]['id']);
+         gym_data[i]['level'] = raid_level[ind];
+         gym_data[i]['boss_id'] = raid_boss[ind];
+         gym_data[i]['raid_end'] = raid_end[ind];
        } else {
          gym_data[i]['raid'] = 'N';
        }
+
     }
   }
 
 }
 
-function addGymsToMap (data, map, toggle, raid, rsvp) {
+function addGymsToMap (data, map, toggle, raid, rsvp, defenders) {
    if (toggle == 1) {
     let indices = [];
     let temp_raid = [];
@@ -470,7 +531,7 @@ function addGymsToMap (data, map, toggle, raid, rsvp) {
 
         for (var i = 0; i < indices.length; i++) {
             if (item.id == temp_raid[i]) {
-                 marker = FortMarker(item, 1, raid[(indices[i])]['raid_end'], num_going[item.id.substr(5)]);
+                 marker = FortMarker(item, 1, raid[(indices[i])]['raid_end'], num_going[item.id.substr(5)], 0);
                  marker.addTo(overlays.Gyms);
            }
         }
@@ -496,7 +557,7 @@ function addGymsToMap (data, map, toggle, raid, rsvp) {
             existing.removeFrom(overlays.Gyms);
             markers[item.id] = undefined;
         }
-        marker = FortMarker(item, 0, 0, 0);
+        marker = FortMarker(item, 0, 0, 0, buildDefender(item.id, defenders));
         marker.addTo(overlays.Gyms);
         }
     });
@@ -505,7 +566,6 @@ function addGymsToMap (data, map, toggle, raid, rsvp) {
 }
 
 function addRaidsToMap(data, rsvp) {
-console.log(data);
     let currentTime = new Date().getTime() / 1000;
     data.forEach(function (item) {
         if (item != undefined) {
@@ -514,15 +574,12 @@ console.log(data);
 	let popup = marker.getPopup();
         let date = null;
         if (marker.raw.team === 0) {
-//            html += '<center><b><h3><font color="grey">An empty gym!</font></b></h3></center>';
+            $('#fort-' + item.fort_id).css('background', '#d3d3d3');
         }else if (marker.raw.team === 1 ) {
-//            html += '<center><b><h3><font color="blue">Team Mystic</font></b></h3></center>';
             $('#fort-' + item.fort_id).css('background', '#2196f3');
         }else if (marker.raw.team === 2 ) {
-//            html += '<center><b><h3><font color="red">Team Valor</font></b></h3></center>';
             $('#fort-' + item.fort_id).css('background', '#d32f2f');
         }else if (marker.raw.team === 3 ) {
-//            html += '<center><b><h3><font color="yellow">Team Instinct</font></b></h3></center>';
             $('#fort-' + item.fort_id).css('background', '#ffeb3b');
         }
         if (item.raid_start > currentTime) {
@@ -728,13 +785,12 @@ function getGyms (toggle) {
     }));
 
     Promise.all(promises).then(function (data) {
-console.log(data[2]);
         if ((toggle == 1) && (toggleraid == 1)) { parseGyms(data[0], data[1], 0); }
         if ((toggle == 1) && (toggleraid == 1)) {
-           addGymsToMap(data[0], map, 1, data[1], data[2])
+           addGymsToMap(data[0], map, 1, data[1], data[2], 0)
         } else if (((toggle == 0) && (togglegym == 1)) || ((toggle == 1) && (togglegym == 1))) {
             parseGyms(data[0], data[1], 1);
-	    addGymsToMap(data[0], map, 0, data[1]);
+	    addGymsToMap(data[0], map, 0, data[1], 0, data[3]);
         }
         if ((toggle == 1) && (toggleraid == 1)) { addRaidsToMap(data[1], data[2]); }
     });
@@ -1273,8 +1329,6 @@ function updateTime() {
 
     if (getPreference("SHOW_TIMER") === "1"){        $(".remaining_raid").each(function() {            $(this).css('visibility', 'visible');            $(this).css('height', '15px');            this.innerHTML = calculateRemainingTime($(this).data('expire'));        });    }else{        $(".remaining_raid").each(function() {            $(this).css('visibility', 'hidden');        });                                                                                                                                            } 
 
-
-
 }
 
 function time(s) {
@@ -1439,7 +1493,7 @@ function populateNearbyList(){
 
                 // Sort pokemon by distance
                 PushSort(pokemon, m);
-            }  
+            }
         }
     }
 
